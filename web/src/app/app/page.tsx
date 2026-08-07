@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useAccount, useReadContract, useReadContracts } from "wagmi";
+import { useAccount, useReadContract, useReadContracts, useSwitchChain } from "wagmi";
 import { midnightFactoryAbi, midnightVaultAbi } from "@/lib/abi";
 import { ConnectControl } from "@/components/connect";
 import { CreateVault } from "@/components/create-vault";
@@ -11,13 +11,14 @@ import { HeirPanel } from "@/components/heir-panel";
 import { OwnerPanel } from "@/components/owner-panel";
 import { RecoveryCard } from "@/components/recovery";
 import { RequestsCard } from "@/components/requests";
-import { Badge, Card, Mono } from "@/components/ui";
+import { Badge, Button, Card, Mono } from "@/components/ui";
 import { CHAIN, FACTORY_ADDRESS, FACTORY_CONFIGURED } from "@/lib/contracts";
 import { shortAddress } from "@/lib/format";
 import { sameAddress, type VaultSummary } from "@/lib/types";
 
 export default function Dashboard() {
   const { address, isConnected, chainId } = useAccount();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   const [selectedVault, setSelectedVault] = useState<`0x${string}` | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -100,9 +101,20 @@ export default function Dashboard() {
       ) : wrongNetwork ? (
         <Card title="Wrong network">
           <p className="text-sm text-ink-muted">
-            Switch your wallet to <span className="text-ink">{CHAIN.name}</span> (chain id{" "}
-            {CHAIN.id}) and reload.
+            Your wallet is on chain id {chainId}. Midnight runs on{" "}
+            <span className="text-ink">{CHAIN.name}</span> (chain id {CHAIN.id}).
           </p>
+          <div className="mt-4">
+            <Button
+              busy={isSwitching}
+              onClick={() => switchChain({ chainId: CHAIN.id })}
+            >
+              Switch to {CHAIN.name}
+            </Button>
+            <p className="mt-2 text-xs text-ink-faint">
+              If the network is missing, your wallet will prompt to add it first.
+            </p>
+          </div>
         </Card>
       ) : (
         <div className="space-y-4">
