@@ -6,7 +6,7 @@ import { ZERO_ADDRESS } from "@/lib/contracts";
 import { bpsToPercent, formatAmount, shortAddress } from "@/lib/format";
 import { sameAddress, type VaultSummary } from "@/lib/types";
 import { useTx } from "@/lib/useTx";
-import { Countdown } from "./countdown";
+import { MoonWatch } from "./moon-phase";
 import { Button, Card, ErrorText, Mono, Stat } from "./ui";
 
 export function HeirPanel({
@@ -46,13 +46,11 @@ export function HeirPanel({
       title="Inheritance"
       subtitle={`Your share: ${bpsToPercent(shareBps)}. Claims use dividend accounting — late deposits still split correctly.`}
     >
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-ink-muted">
-            {summary.inheritanceUnlocked ? "Inheritance is unlocked" : "Unlocks in"}
-          </p>
-          <Countdown target={Number(summary.inheritanceUnlocksAt)} />
-        </div>
+      <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto]">
+        <MoonWatch
+          lastAlive={Number(summary.lastAlive)}
+          period={Number(summary.inactivityPeriod)}
+        />
         <Stat label="Claimable now (native)" value={formatAmount(nativeClaimable)} />
       </div>
 

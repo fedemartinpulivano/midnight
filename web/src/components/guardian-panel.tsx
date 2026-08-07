@@ -3,7 +3,7 @@
 import { formatAmount } from "@/lib/format";
 import type { VaultSummary } from "@/lib/types";
 import { Card, Stat } from "./ui";
-import { Countdown } from "./countdown";
+import { MoonWatch } from "./moon-phase";
 
 /// Guardian actions live in RequestsCard / RecoveryCard; this panel gives the
 /// guardian context about the vault they protect (no private data — everything
@@ -19,14 +19,13 @@ export function GuardianPanel({
       title="Guardian duty"
       subtitle={`You are one of ${summary.guardians.length} guardians. ${summary.threshold.toString()} approvals execute a withdrawal.`}
     >
-      <div className="flex flex-wrap items-end justify-between gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-6">
         <Stat label="Vault balance" value={formatAmount(summary.nativeBalance)} />
-        <div className="text-right">
-          <p className="text-xs font-medium uppercase tracking-widest text-ink-muted">
-            Owner inactivity timer
-          </p>
-          <Countdown target={Number(summary.inheritanceUnlocksAt)} />
-        </div>
+        <MoonWatch
+          lastAlive={Number(summary.lastAlive)}
+          period={Number(summary.inactivityPeriod)}
+          compact
+        />
       </div>
     </Card>
   );

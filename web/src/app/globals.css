@@ -30,8 +30,14 @@
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-mono: var(--font-spline-mono), ui-monospace, "Cascadia Mono", monospace;
 
+  --color-sky: #070b22; /* true midnight, hero + moon-watch surfaces */
+  --color-sky-high: #131a45;
+  --color-starlight: #b9c0e0;
+  --color-moonface: #f2e5bf;
+
   --shadow-card: 0 1px 2px rgba(23, 30, 60, 0.04), 0 8px 24px -12px rgba(23, 30, 60, 0.12);
   --shadow-lift: 0 2px 4px rgba(23, 30, 60, 0.05), 0 18px 40px -16px rgba(51, 62, 158, 0.22);
+  --shadow-moon: 0 0 60px 18px rgba(233, 216, 166, 0.25);
 }
 
 html {
@@ -86,5 +92,60 @@ body {
   .rise {
     animation: none;
     opacity: 1;
+  }
+}
+
+/* ---- night sky (landing hero, moon-watch cards) ---------------------- */
+
+.night-sky {
+  background: linear-gradient(
+    to bottom,
+    var(--color-sky) 0%,
+    #0d1334 46%,
+    var(--color-sky-high) 68%,
+    #43498a 86%,
+    var(--color-paper) 100%
+  );
+}
+
+.stars,
+.stars-far {
+  background-repeat: repeat;
+  background-size: 420px 420px;
+}
+
+.stars-far {
+  background-image:
+    radial-gradient(1px 1px at 30px 60px, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 140px 30px, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 260px 90px, rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 370px 150px, rgba(255, 255, 255, 0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90px 210px, rgba(255, 255, 255, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 210px 260px, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 330px 320px, rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 50px 350px, rgba(255, 255, 255, 0.4) 50%, transparent 51%);
+}
+
+.stars {
+  background-image:
+    radial-gradient(1.5px 1.5px at 80px 120px, rgba(242, 229, 191, 0.9) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 300px 50px, rgba(255, 255, 255, 0.85) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 180px 300px, rgba(242, 229, 191, 0.8) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 390px 240px, rgba(255, 255, 255, 0.75) 50%, transparent 51%);
+  animation: twinkle 5s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stars {
+    animation: none;
   }
 }

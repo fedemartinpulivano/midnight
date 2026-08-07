@@ -8,7 +8,7 @@ import { ZERO_ADDRESS } from "@/lib/contracts";
 import { bpsToPercent, formatAmount, shortAddress } from "@/lib/format";
 import type { VaultSummary } from "@/lib/types";
 import { useTx } from "@/lib/useTx";
-import { Countdown } from "./countdown";
+import { MoonWatch } from "./moon-phase";
 import { Badge, Button, Card, ErrorText, Field, inputClass, Mono, Stat } from "./ui";
 
 export function OwnerPanel({
@@ -81,12 +81,11 @@ export function OwnerPanel({
             value={formatAmount(summary.nativeBalance)}
             sub={`${summary.trackedTokens.length} tracked token(s)`}
           />
-          <div className="text-right">
-            <p className="text-xs font-medium uppercase tracking-widest text-ink-muted">
-              Inheritance unlocks in
-            </p>
-            <Countdown target={Number(summary.inheritanceUnlocksAt)} />
-          </div>
+          <MoonWatch
+            lastAlive={Number(summary.lastAlive)}
+            period={Number(summary.inactivityPeriod)}
+            compact
+          />
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button

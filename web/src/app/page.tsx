@@ -48,19 +48,19 @@ const failureModes = [
   },
 ];
 
-function Moon() {
+function FullMoon() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -top-10 right-0 -z-10 hidden md:block"
+      className="pointer-events-none absolute -top-6 right-2 hidden md:block"
     >
       <div
-        className="size-64 rounded-full lg:size-80"
+        className="size-56 rounded-full shadow-moon lg:size-72"
         style={{
           background:
-            "radial-gradient(circle at 38% 34%, #fffdf6 0%, #f6edd2 38%, #e9dcb4 62%, rgba(233, 220, 180, 0.0) 72%)",
+            "radial-gradient(circle at 38% 34%, #fdf8e7 0%, #f2e5bf 42%, #dcc990 68%, #c8b276 100%)",
           boxShadow:
-            "0 0 80px 24px rgba(168, 129, 31, 0.14), inset -18px -14px 40px rgba(168, 129, 31, 0.18)",
+            "0 0 90px 26px rgba(242, 229, 191, 0.28), inset -20px -16px 46px rgba(140, 112, 40, 0.28)",
         }}
       />
     </div>
@@ -69,97 +69,107 @@ function Moon() {
 
 export default function Landing() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6">
-      <nav className="rise rise-1 flex items-center justify-between py-8">
-        <span className="font-display text-xl font-semibold tracking-tight">
-          <span className="mr-1.5 inline-block size-2.5 rounded-full bg-gold align-middle" />
-          midnight
-        </span>
-        <Link
-          href="/app"
-          className="rounded-xl border border-line-strong bg-card px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-moon hover:text-moon"
-        >
-          Open app
-        </Link>
-      </nav>
-
-      <section className="relative flex flex-1 flex-col items-start justify-center py-16">
-        <Moon />
-        <p className="rise rise-2 mb-5 rounded-full border border-gold/30 bg-gold-soft px-3.5 py-1 text-xs font-semibold tracking-wide text-gold">
-          Non-custodial recovery vault on BNB Chain
-        </p>
-        <h1 className="rise rise-3 max-w-3xl font-display text-6xl font-medium leading-[1.04] tracking-tight md:text-7xl">
-          The vault that{" "}
-          <em className="font-light italic text-moon">survives&nbsp;you</em>.
-        </h1>
-        <p className="rise rise-4 mt-7 max-w-2xl text-lg leading-relaxed text-ink-muted">
-          Midnight protects your crypto against the three ways people actually lose it:
-          stolen keys, lost keys, and death. Guardians approve withdrawals, heirs inherit
-          after inactivity, and a lost key can be recovered — all enforced by a smart
-          contract nobody else controls.
-        </p>
-        <div className="rise rise-5 mt-9 flex gap-3">
-          <Link
-            href="/app"
-            className="rounded-xl bg-ink px-6 py-3 text-sm font-medium text-paper shadow-card transition-colors hover:bg-moon-deep"
-          >
-            Create your vault
-          </Link>
-          <a
-            href="https://github.com/fedemartinpulivano/midnight"
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-xl border border-line-strong bg-card px-6 py-3 text-sm font-medium text-ink transition-colors hover:border-moon hover:text-moon"
-          >
-            Read the contracts
-          </a>
-        </div>
-        <p className="rise rise-6 mt-10 flex flex-wrap gap-x-6 gap-y-1 text-xs font-medium tracking-wide text-ink-faint">
-          <span>35 passing tests</span>
-          <span>·</span>
-          <span>zero backend</span>
-          <span>·</span>
-          <span>one contract per vault</span>
-          <span>·</span>
-          <span>MIT licensed</span>
-        </p>
-      </section>
-
-      <section className="border-t border-line py-14">
-        <h2 className="rise rise-1 font-display text-3xl font-medium tracking-tight">
-          Three failure modes. <span className="italic text-moon">One vault.</span>
-        </h2>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {failureModes.map((mode, index) => (
-            <div
-              key={mode.title}
-              className={`rise rise-${index + 2} rounded-2xl bg-ink p-6 text-paper shadow-lift`}
+    <main className="min-h-screen">
+      {/* ---- midnight sky: it dawns into paper as you scroll ---- */}
+      <div className="night-sky relative overflow-hidden">
+        <div className="stars-far pointer-events-none absolute inset-0" aria-hidden />
+        <div className="stars pointer-events-none absolute inset-0" aria-hidden />
+        <div className="relative mx-auto max-w-5xl px-6">
+          <nav className="rise rise-1 flex items-center justify-between py-8">
+            <span className="font-display text-xl font-semibold tracking-tight text-paper">
+              <span className="mr-1.5 inline-block size-2.5 rounded-full bg-moonface align-middle" />
+              midnight
+            </span>
+            <Link
+              href="/app"
+              className="rounded-xl border border-white/25 px-4 py-2 text-sm font-medium text-paper transition-colors hover:border-moonface hover:text-moonface"
             >
-              <h3 className="font-display text-lg font-medium text-gold-soft">{mode.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-paper/75">{mode.body}</p>
+              Open app
+            </Link>
+          </nav>
+
+          <section className="relative flex flex-col items-start justify-center pb-40 pt-14">
+            <FullMoon />
+            <p className="rise rise-2 mb-5 rounded-full border border-moonface/30 bg-white/5 px-3.5 py-1 text-xs font-semibold tracking-wide text-moonface">
+              Non-custodial recovery vault on BNB Chain
+            </p>
+            <h1 className="rise rise-3 max-w-3xl font-display text-6xl font-medium leading-[1.04] tracking-tight text-paper md:text-7xl">
+              The vault that{" "}
+              <em className="font-light italic text-moonface">survives&nbsp;you</em>.
+            </h1>
+            <p className="rise rise-4 mt-7 max-w-2xl text-lg leading-relaxed text-starlight">
+              Midnight protects your crypto against the three ways people actually lose it:
+              stolen keys, lost keys, and death. Guardians approve withdrawals, heirs inherit
+              after inactivity, and a lost key can be recovered — all enforced by a smart
+              contract nobody else controls. While you sleep, the vault keeps watch.
+            </p>
+            <div className="rise rise-5 mt-9 flex gap-3">
+              <Link
+                href="/app"
+                className="rounded-xl bg-moonface px-6 py-3 text-sm font-semibold text-ink transition-colors hover:bg-gold-soft"
+              >
+                Create your vault
+              </Link>
+              <a
+                href="https://github.com/fedemartinpulivano/midnight"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl border border-white/25 px-6 py-3 text-sm font-medium text-paper transition-colors hover:border-moonface hover:text-moonface"
+              >
+                Read the contracts
+              </a>
+            </div>
+            <p className="rise rise-6 mt-10 flex flex-wrap gap-x-6 gap-y-1 text-xs font-medium tracking-wide text-starlight/60">
+              <span>35 passing tests</span>
+              <span>·</span>
+              <span>zero backend</span>
+              <span>·</span>
+              <span>one contract per vault</span>
+              <span>·</span>
+              <span>MIT licensed</span>
+            </p>
+          </section>
+        </div>
+      </div>
+
+      {/* ---- daylight: the product, in paper ---- */}
+      <div className="mx-auto max-w-5xl px-6">
+        <section className="py-14">
+          <h2 className="font-display text-3xl font-medium tracking-tight">
+            Three failure modes. <span className="italic text-moon">One vault.</span>
+          </h2>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {failureModes.map((mode) => (
+              <div
+                key={mode.title}
+                className="stars-far rounded-2xl bg-sky p-6 text-paper shadow-lift"
+              >
+                <h3 className="font-display text-lg font-medium text-moonface">{mode.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-starlight">{mode.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-4 py-14 md:grid-cols-3">
+          {features.map((feature) => (
+            <div
+              key={feature.n}
+              className="group rounded-2xl border border-line bg-card p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-moon/40 hover:shadow-lift"
+            >
+              <p className="font-display text-sm font-medium text-gold">{feature.n}</p>
+              <h3 className="mt-2 text-sm font-semibold text-ink group-hover:text-moon">
+                {feature.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{feature.body}</p>
             </div>
           ))}
-        </div>
-      </section>
+        </section>
 
-      <section className="grid gap-4 py-14 md:grid-cols-3">
-        {features.map((feature) => (
-          <div
-            key={feature.n}
-            className="group rounded-2xl border border-line bg-card p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-moon/40 hover:shadow-lift"
-          >
-            <p className="font-display text-sm font-medium text-gold">{feature.n}</p>
-            <h3 className="mt-2 text-sm font-semibold text-ink group-hover:text-moon">
-              {feature.title}
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{feature.body}</p>
-          </div>
-        ))}
-      </section>
-
-      <footer className="border-t border-line py-6 text-center text-xs text-ink-faint">
-        Midnight — rebuilt from HackITBA 2026&apos;s Vaultix, improved from zero. MIT licensed.
-      </footer>
+        <footer className="border-t border-line py-6 text-center text-xs text-ink-faint">
+          Midnight — rebuilt from HackITBA 2026&apos;s Vaultix, improved from zero. MIT licensed.
+        </footer>
+      </div>
     </main>
   );
 }
