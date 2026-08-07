@@ -93,6 +93,7 @@ export function OwnerPanel({
           <MoonWatch
             lastAlive={Number(summary.lastAlive)}
             period={Number(summary.inactivityPeriod)}
+            unlockedOnChain={summary.inheritanceUnlocked}
             bare
           />
         </div>

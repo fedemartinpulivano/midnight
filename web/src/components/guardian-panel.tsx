@@ -24,6 +24,7 @@ export function GuardianPanel({
         <MoonWatch
           lastAlive={Number(summary.lastAlive)}
           period={Number(summary.inactivityPeriod)}
+          unlockedOnChain={summary.inheritanceUnlocked}
           size={48}
         />
       </div>

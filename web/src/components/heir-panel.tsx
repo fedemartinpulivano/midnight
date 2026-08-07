@@ -50,6 +50,7 @@ export function HeirPanel({
         <MoonWatch
           lastAlive={Number(summary.lastAlive)}
           period={Number(summary.inactivityPeriod)}
+          unlockedOnChain={summary.inheritanceUnlocked}
         />
         <Stat label="Claimable now (native)" value={formatAmount(nativeClaimable)} />
       </div>

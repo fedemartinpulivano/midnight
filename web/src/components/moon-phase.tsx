@@ -56,11 +56,15 @@ export function MoonPhase({
 export function MoonWatch({
   lastAlive,
   period,
+  unlockedOnChain = false,
   bare = false,
   size = 64,
 }: {
   lastAlive: number;
   period: number;
+  /// Chain-reported unlock state. The contract is the source of truth — on a
+  /// time-warped chain the browser clock lags, so this forces the full moon.
+  unlockedOnChain?: boolean;
   bare?: boolean;
   size?: number;
 }) {
@@ -70,8 +74,9 @@ export function MoonWatch({
     return () => clearInterval(timer);
   }, []);
 
-  const progress = period > 0 ? (now - lastAlive) / period : 0;
-  const unlocked = progress >= 1;
+  const clockProgress = period > 0 ? (now - lastAlive) / period : 0;
+  const progress = unlockedOnChain ? 1 : Math.min(clockProgress, 0.999);
+  const unlocked = unlockedOnChain || clockProgress >= 1;
   const percent = Math.min(100, Math.max(0, Math.round(progress * 100)));
 
   const content = (
@@ -81,7 +86,11 @@ export function MoonWatch({
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-starlight/80">
           Moon watch — {unlocked ? "inheritance unlocked" : "unlocks in"}
         </p>
-        <Countdown target={lastAlive + period} variant="dark" />
+        {unlocked ? (
+          <span className="font-mono text-2xl font-semibold text-moonface">full moon</span>
+        ) : (
+          <Countdown target={lastAlive + period} variant="dark" />
+        )}
         <div className="mt-2 flex items-center gap-2">
           <div className="h-1 w-28 overflow-hidden rounded-full bg-white/10">
             <div
