@@ -1,11 +1,16 @@
-import { formatEther } from "viem";
+import { formatUnits } from "viem";
 
 export function shortAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/// Native amounts. Tokens go through `formatUnits`-aware `formatTokenAmount`.
 export function formatAmount(wei: bigint, symbol = "tBNB"): string {
-  const value = Number(formatEther(wei));
+  return formatTokenAmount(wei, 18, symbol);
+}
+
+export function formatTokenAmount(amount: bigint, decimals: number, symbol: string): string {
+  const value = Number(formatUnits(amount, decimals));
   const display =
     value === 0 ? "0" : value < 0.0001 ? "<0.0001" : value.toLocaleString("en-US", { maximumFractionDigits: 4 });
   return `${display} ${symbol}`;

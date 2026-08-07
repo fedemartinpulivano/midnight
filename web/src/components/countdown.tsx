@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { formatDuration } from "@/lib/format";
+import { useChainNow } from "@/lib/useChainNow";
 
 export function Countdown({
   target,
@@ -10,13 +10,7 @@ export function Countdown({
   target: number;
   variant?: "light" | "dark";
 }) {
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
+  const now = useChainNow();
   const remaining = target - now;
   const tone =
     variant === "dark"

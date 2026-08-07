@@ -15,8 +15,23 @@ export type VaultSummary = {
   minValidRecoveryId: bigint;
   inheritanceUnlocked: boolean;
   inheritanceUnlocksAt: bigint;
+  inheritanceAnnouncedAt: bigint;
+  inheritanceClaimableAt: bigint;
+  inheritanceClaimable: boolean;
   hasPendingConfig: boolean;
 };
+
+export type PendingConfigData = readonly [
+  exists: boolean,
+  guardians: readonly `0x${string}`[],
+  threshold: bigint,
+  heirs: readonly `0x${string}`[],
+  shares: readonly number[],
+  inactivityPeriod: bigint,
+  requestTTL: bigint,
+  applyAfter: bigint,
+  vetoes: number,
+];
 
 export type WithdrawalRequestData = {
   token: `0x${string}`;

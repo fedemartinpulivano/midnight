@@ -1,7 +1,7 @@
 {
   "network": "localhost",
   "chainId": 31337,
-  "factory": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "implementation": "0xa16E02E87b7454126E5E10d957A927A7F5B5d2be",
-  "deployedAt": "2026-08-07T20:37:32.292Z"
+  "factory": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+  "implementation": "0x8dAF17A20c9DBA35f005b6324F493785D239719d",
+  "deployedAt": "2026-08-07T21:53:28.998Z"
 }

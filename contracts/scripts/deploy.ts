@@ -33,7 +33,11 @@ async function main() {
     )
   );
   console.log(`Saved deployments/${network.name}.json`);
-  console.log(`Set NEXT_PUBLIC_FACTORY_ADDRESS=${factoryAddress} in web/.env.local`);
+  // Deliberately not written for you: a bscTestnet deploy would otherwise clobber
+  // whatever the frontend is currently pointed at.
+  console.log(
+    `Next step — put this in web/.env.local:\n  NEXT_PUBLIC_FACTORY_ADDRESS=${factoryAddress}`
+  );
 }
 
 main().catch((error) => {

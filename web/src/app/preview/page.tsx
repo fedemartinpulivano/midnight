@@ -37,6 +37,9 @@ const mockSummary: VaultSummary = {
   minValidRecoveryId: 1n,
   inheritanceUnlocked: false,
   inheritanceUnlocksAt: BigInt(now + 19 * DAY),
+  inheritanceAnnouncedAt: 0n,
+  inheritanceClaimableAt: 0n,
+  inheritanceClaimable: false,
   hasPendingConfig: false,
 };
 

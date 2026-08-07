@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { isAddress } from "viem";
 import { useReadContracts, useWriteContract } from "wagmi";
 import { midnightVaultAbi } from "@/lib/abi";
 import { shortAddress } from "@/lib/format";
 import type { RecoveryData, VaultSummary } from "@/lib/types";
+import { useChainNow } from "@/lib/useChainNow";
 import { useTx } from "@/lib/useTx";
 import { Badge, Button, Card, ErrorText, Field, inputClass, Mono } from "./ui";
 
@@ -25,12 +26,7 @@ export function RecoveryCard({
   const { send, pending, error } = useTx();
   const [newOwner, setNewOwner] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 5_000);
-    return () => clearInterval(timer);
-  }, []);
+  const now = useChainNow();
 
   const ids = useMemo(() => {
     const last = Number(summary.recoveryCount);

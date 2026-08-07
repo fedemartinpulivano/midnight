@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useChainNow } from "@/lib/useChainNow";
 import { Countdown } from "./countdown";
 
 /// The moon fills as the owner's inactivity progresses: new moon = just
@@ -62,17 +62,13 @@ export function MoonWatch({
 }: {
   lastAlive: number;
   period: number;
-  /// Chain-reported unlock state. The contract is the source of truth — on a
-  /// time-warped chain the browser clock lags, so this forces the full moon.
+  /// Chain-reported unlock state, kept as a belt-and-braces override even though
+  /// the progress below now counts in chain time too.
   unlockedOnChain?: boolean;
   bare?: boolean;
   size?: number;
 }) {
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 30_000);
-    return () => clearInterval(timer);
-  }, []);
+  const now = useChainNow();
 
   const clockProgress = period > 0 ? (now - lastAlive) / period : 0;
   const progress = unlockedOnChain ? 1 : Math.min(clockProgress, 0.999);

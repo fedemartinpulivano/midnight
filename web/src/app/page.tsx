@@ -9,7 +9,7 @@ const features = [
   {
     n: "02",
     title: "Weighted inheritance",
-    body: "Assign each heir a percentage. After your configured inactivity period, they claim exactly their share — native coin and every tracked ERC20.",
+    body: "Assign each heir a percentage. After your inactivity period and a 48h notice, they claim exactly their share — native coin and every tracked ERC20.",
   },
   {
     n: "03",
@@ -44,7 +44,7 @@ const failureModes = [
   },
   {
     title: "Death or absence",
-    body: "After your inactivity period, heirs claim their exact shares. No lawyers, no exchange support tickets, no lost coins.",
+    body: "After your inactivity period an heir gives notice, and 48 hours later they claim their exact shares. Any sign of life from you cancels it.",
   },
 ];
 

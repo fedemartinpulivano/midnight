@@ -1,6 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+/// @dev The slice of MidnightFactory the vault needs to keep role discovery honest.
+interface IMidnightRegistry {
+    function syncRoles(
+        address previousOwner,
+        address newOwner,
+        address[] calldata oldGuardians,
+        address[] calldata newGuardians,
+        address[] calldata oldHeirs,
+        address[] calldata newHeirs
+    ) external;
+}
+
 /// @title MidnightVault
 /// @notice Non-custodial recovery vault. One clonable contract per user that holds
 ///         native coin + any ERC20 and enforces three human safety layers:
@@ -9,9 +21,12 @@ pragma solidity 0.8.28;
 ///            executes automatically when the approval threshold is reached, can be
 ///            cancelled by the owner, is rejected only when it can mathematically no
 ///            longer reach the threshold, and expires after `requestTTL`.
-///         2. Inheritance  — after `inactivityPeriod` without proof of life, heirs
+///         2. Inheritance  — after `inactivityPeriod` without proof of life, an heir
+///            announces the claim and, once `INHERITANCE_NOTICE` has passed, heirs
 ///            claim funds pro-rata to their basis-point shares using dividend-style
-///            accounting (no snapshots, late deposits distribute correctly).
+///            accounting (no snapshots, late deposits distribute correctly). Any
+///            proof of life during the notice window voids the announcement, so an
+///            owner who was merely unreachable is never drained without warning.
 ///         3. Social recovery — M-of-N guardians can rotate a lost/compromised owner
 ///            key to a new address after a timelock the current owner can veto.
 ///
@@ -100,6 +115,9 @@ contract MidnightVault {
         uint256 minValidRecoveryId;
         bool inheritanceUnlocked;
         uint256 inheritanceUnlocksAt;
+        uint256 inheritanceAnnouncedAt; // 0 when no announcement is live
+        uint256 inheritanceClaimableAt; // 0 when no announcement is live
+        bool inheritanceClaimable; // notice served, heirs can withdraw now
         bool hasPendingConfig;
     }
 
@@ -121,6 +139,11 @@ contract MidnightVault {
 
     uint256 public constant CONFIG_DELAY = 2 days;
     uint256 public constant RECOVERY_DELAY = 2 days;
+
+    /// @notice Grace window between an heir announcing a claim and the first payout.
+    ///         Deliberately not vetoable by guardians — only the owner's own proof of
+    ///         life stops it, so guardians can never trap an inheritance forever.
+    uint256 public constant INHERITANCE_NOTICE = 2 days;
 
     // ---------------------------------------------------------------------
     // Storage
@@ -151,6 +174,11 @@ contract MidnightVault {
 
     address[] private _trackedTokens;
     mapping(address => bool) public isTrackedToken;
+    mapping(address => uint256) private _trackedIndex; // token => position + 1
+
+    /// @notice When an heir last announced a claim. Only meaningful while it is at
+    ///         or after the current unlock date — see `_announcementLive`.
+    uint256 public inheritanceAnnouncedAt;
 
     // Dividend-style inheritance accounting, per token (NATIVE = address(0)).
     mapping(address => uint256) public totalInheritanceClaimed;
@@ -193,6 +221,12 @@ contract MidnightVault {
     error NotAContract(address token);
     error StillActive(uint256 unlocksAt);
     error NothingToClaim();
+    error NoticeNotStarted();
+    error NoticeAlreadyStarted(uint256 claimableAt);
+    error NoticeNotElapsed(uint256 claimableAt);
+    error NotStakeholder(address caller);
+    error TokenNotTracked(address token);
+    error TokenNotEmpty(address token, uint256 balance);
     error UnknownRecovery(uint256 id);
     error StaleRecovery(uint256 id);
     error RecoveryClosed(uint256 id);
@@ -209,6 +243,7 @@ contract MidnightVault {
     event VaultInitialized(address indexed owner, uint256 threshold, uint256 inactivityPeriod);
     event Deposited(address indexed from, address indexed token, uint256 amount);
     event TokenTracked(address indexed token);
+    event TokenUntracked(address indexed token);
     event Heartbeat(address indexed owner, uint256 timestamp);
 
     event WithdrawalRequested(
@@ -219,7 +254,9 @@ contract MidnightVault {
     event WithdrawalCancelled(uint256 indexed id);
     event WithdrawalRejected(uint256 indexed id);
 
+    event InheritanceAnnounced(address indexed heir, uint256 claimableAt);
     event InheritanceClaimed(address indexed heir, address indexed token, uint256 amount);
+    event InheritanceClaimSkipped(address indexed heir, address indexed token);
 
     event RecoveryProposed(uint256 indexed id, address indexed proposer, address indexed newOwner);
     event RecoveryApproved(uint256 indexed id, address indexed guardian);
@@ -247,6 +284,15 @@ contract MidnightVault {
 
     modifier onlyHeir() {
         if (!isHeir[msg.sender]) revert NotHeir(msg.sender);
+        _;
+    }
+
+    /// @dev Owner, guardians and heirs — everyone with a stake in what this vault
+    ///      holds. Used for bookkeeping actions that outsiders could otherwise spam.
+    modifier onlyStakeholder() {
+        if (msg.sender != owner && !isGuardian[msg.sender] && !isHeir[msg.sender]) {
+            revert NotStakeholder(msg.sender);
+        }
         _;
     }
 
@@ -310,9 +356,33 @@ contract MidnightVault {
     }
 
     /// @notice Register a token that was sent directly via transfer so heirs can
-    ///         claim it. Callable by anyone; bounded by MAX_TRACKED_TOKENS.
-    function trackToken(address token) external {
+    ///         claim it. Restricted to stakeholders: the list is a bounded resource
+    ///         and an outsider filling it would block real tokens from ever being
+    ///         tracked.
+    function trackToken(address token) external onlyStakeholder {
         _trackToken(token);
+    }
+
+    /// @notice Drop a token from the tracked list. Only allowed when the vault holds
+    ///         none of it, so this can never be used to hide assets from heirs.
+    function untrackToken(address token) external onlyStakeholder {
+        if (!isTrackedToken[token]) revert TokenNotTracked(token);
+
+        (uint256 balance, bool ok) = _tokenBalanceSafe(token);
+        if (ok && balance > 0) revert TokenNotEmpty(token, balance);
+
+        uint256 slot = _trackedIndex[token] - 1;
+        uint256 last = _trackedTokens.length - 1;
+        if (slot != last) {
+            address moved = _trackedTokens[last];
+            _trackedTokens[slot] = moved;
+            _trackedIndex[moved] = slot + 1;
+        }
+        _trackedTokens.pop();
+
+        _trackedIndex[token] = 0;
+        isTrackedToken[token] = false;
+        emit TokenUntracked(token);
     }
 
     /// @notice Free proof-of-life ping. Resets the inactivity clock without moving funds.
@@ -404,13 +474,30 @@ contract MidnightVault {
     // Inheritance (dividend-style, per token)
     // ---------------------------------------------------------------------
 
-    /// @notice Claim the caller's share of one token after the inactivity period.
+    /// @notice Start the claim notice. Only an heir can, and only once the owner has
+    ///         already gone quiet for a full `inactivityPeriod`.
+    /// @dev    The announcement is not stored as a flag but as a timestamp, and it
+    ///         counts only while it sits at or after the current unlock date. That
+    ///         single comparison means every proof of life — heartbeat, deposit,
+    ///         withdrawal request, recovery veto — voids it for free, with no extra
+    ///         bookkeeping and no way to forget a code path.
+    function announceInheritance() external onlyHeir {
+        _requireInactive();
+        if (_announcementLive()) {
+            revert NoticeAlreadyStarted(inheritanceAnnouncedAt + INHERITANCE_NOTICE);
+        }
+
+        inheritanceAnnouncedAt = block.timestamp;
+        emit InheritanceAnnounced(msg.sender, block.timestamp + INHERITANCE_NOTICE);
+    }
+
+    /// @notice Claim the caller's share of one token, once the notice has elapsed.
     /// @dev    Entitlement = (currentBalance + totalClaimed) * shareBps / 10000,
     ///         minus what this heir already claimed. No snapshots: deposits that
     ///         arrive after unlock are still split correctly, and claiming twice
     ///         only ever pays the delta.
     function claimInheritance(address token) external onlyHeir nonReentrant {
-        _requireInheritanceUnlocked();
+        _requireClaimable();
         uint256 payout = _claimableBy(msg.sender, token);
         if (payout == 0) revert NothingToClaim();
 
@@ -423,41 +510,74 @@ contract MidnightVault {
 
     /// @notice Claim native + every tracked token in one transaction, skipping
     ///         empty positions instead of reverting.
+    /// @dev    A token that reverts on transfer is skipped rather than allowed to
+    ///         take the whole sweep down with it — otherwise one hostile entry in
+    ///         the tracked list would permanently strand every other asset.
     function claimAllInheritance() external onlyHeir nonReentrant {
-        _requireInheritanceUnlocked();
-        bool paidSomething;
-
-        uint256 nativePayout = _claimableBy(msg.sender, NATIVE);
-        if (nativePayout > 0) {
-            inheritanceClaimedBy[msg.sender][NATIVE] += nativePayout;
-            totalInheritanceClaimed[NATIVE] += nativePayout;
-            _transferOut(NATIVE, msg.sender, nativePayout);
-            emit InheritanceClaimed(msg.sender, NATIVE, nativePayout);
-            paidSomething = true;
-        }
+        _requireClaimable();
+        bool paidSomething = _sweep(NATIVE);
 
         uint256 count = _trackedTokens.length;
         for (uint256 i = 0; i < count; i++) {
-            address token = _trackedTokens[i];
-            uint256 payout = _claimableBy(msg.sender, token);
-            if (payout == 0) continue;
-            inheritanceClaimedBy[msg.sender][token] += payout;
-            totalInheritanceClaimed[token] += payout;
-            _transferOut(token, msg.sender, payout);
-            emit InheritanceClaimed(msg.sender, token, payout);
-            paidSomething = true;
+            if (_sweep(_trackedTokens[i])) paidSomething = true;
         }
 
         if (!paidSomething) revert NothingToClaim();
     }
 
-    function _requireInheritanceUnlocked() private view {
+    /// @dev Pays one asset to `msg.sender` and reports whether anything moved.
+    ///      Accounting is written before the transfer and rolled back if the
+    ///      transfer fails, so a failed leg leaves no trace.
+    function _sweep(address token) private returns (bool) {
+        uint256 payout = _claimableBy(msg.sender, token);
+        if (payout == 0) return false;
+
+        inheritanceClaimedBy[msg.sender][token] += payout;
+        totalInheritanceClaimed[token] += payout;
+
+        if (_transferOutSafe(token, msg.sender, payout)) {
+            emit InheritanceClaimed(msg.sender, token, payout);
+            return true;
+        }
+
+        inheritanceClaimedBy[msg.sender][token] -= payout;
+        totalInheritanceClaimed[token] -= payout;
+        emit InheritanceClaimSkipped(msg.sender, token);
+        return false;
+    }
+
+    function _requireInactive() private view {
         uint256 unlocksAt = lastAlive + inactivityPeriod;
         if (block.timestamp < unlocksAt) revert StillActive(unlocksAt);
     }
 
+    function _requireClaimable() private view {
+        _requireInactive();
+        if (!_announcementLive()) revert NoticeNotStarted();
+
+        uint256 claimableAt = inheritanceAnnouncedAt + INHERITANCE_NOTICE;
+        if (block.timestamp < claimableAt) revert NoticeNotElapsed(claimableAt);
+    }
+
+    /// @dev An announcement counts only if it was made after the owner had already
+    ///      been silent for a full period. Any later proof of life pushes the unlock
+    ///      date past it and the announcement stops counting.
+    function _announcementLive() private view returns (bool) {
+        uint256 announced = inheritanceAnnouncedAt;
+        return announced != 0 && announced >= lastAlive + inactivityPeriod;
+    }
+
     function _claimableBy(address heir, address token) private view returns (uint256) {
-        uint256 balance = token == NATIVE ? address(this).balance : _tokenBalance(token);
+        uint256 balance;
+        if (token == NATIVE) {
+            balance = address(this).balance;
+        } else {
+            // A token whose balanceOf misbehaves is worth zero here rather than a
+            // revert, so it cannot block the rest of the inheritance.
+            bool ok;
+            (balance, ok) = _tokenBalanceSafe(token);
+            if (!ok) return 0;
+        }
         uint256 totalEver = balance + totalInheritanceClaimed[token];
         uint256 entitled = (totalEver * heirShareBps[heir]) / BPS_DENOMINATOR;
         uint256 alreadyClaimed = inheritanceClaimedBy[heir][token];
@@ -510,7 +630,8 @@ contract MidnightVault {
 
         prop.executed = true;
         address previousOwner = owner;
-        owner = prop.newOwner;
+        address newOwner = prop.newOwner;
+        owner = newOwner;
 
         // A rotated key means the old owner is not trusted: drop every pending
         // request and every other recovery proposal.
@@ -519,7 +640,11 @@ contract MidnightVault {
         delete _pendingConfig;
         _touch();
 
-        emit RecoveryExecuted(id, previousOwner, prop.newOwner);
+        // Without this the new owner would not find the vault they now control.
+        address[] memory unchangedRoles = new address[](0);
+        _syncRegistry(previousOwner, newOwner, unchangedRoles, unchangedRoles, unchangedRoles, unchangedRoles);
+
+        emit RecoveryExecuted(id, previousOwner, newOwner);
     }
 
     function _openRecovery(uint256 id) private view returns (RecoveryProposal storage prop) {
@@ -598,10 +723,15 @@ contract MidnightVault {
         uint256 readyAt = uint256(pending.proposedAt) + CONFIG_DELAY;
         if (block.timestamp < readyAt) revert TimelockNotElapsed(readyAt);
 
+        address[] memory oldGuardians = _guardians;
+        address[] memory oldHeirs = _heirs;
+        address[] memory newGuardians = pending.guardians;
+        address[] memory newHeirs = pending.heirs;
+
         _clearGuardians();
         _clearHeirs();
-        _setGuardians(pending.guardians, pending.threshold, owner);
-        _setHeirs(pending.heirs, pending.shares, owner);
+        _setGuardians(newGuardians, pending.threshold, owner);
+        _setHeirs(newHeirs, pending.shares, owner);
         _setPeriods(pending.inactivityPeriod, pending.requestTTL);
 
         // New guardian set must not inherit votes cast under the old one.
@@ -610,6 +740,9 @@ contract MidnightVault {
 
         uint256 nonce = configNonce;
         delete _pendingConfig;
+
+        _syncRegistry(owner, owner, oldGuardians, newGuardians, oldHeirs, newHeirs);
+
         emit ConfigApplied(nonce);
     }
 
@@ -674,7 +807,19 @@ contract MidnightVault {
         vetoes = pending.vetoes;
     }
 
+    /// @notice What `heir` could withdraw right now. Zero until the notice has run,
+    ///         so the UI never offers a claim the vault would reject.
     function claimableInheritance(address heir, address token) external view returns (uint256) {
+        if (!isHeir[heir]) return 0;
+        if (block.timestamp < lastAlive + inactivityPeriod) return 0;
+        if (!_announcementLive()) return 0;
+        if (block.timestamp < inheritanceAnnouncedAt + INHERITANCE_NOTICE) return 0;
+        return _claimableBy(heir, token);
+    }
+
+    /// @notice Entitlement ignoring the notice — what the heir is owed once the
+    ///         window closes. Lets the UI show the number during the countdown.
+    function pendingInheritance(address heir, address token) external view returns (uint256) {
         if (!isHeir[heir]) return 0;
         if (block.timestamp < lastAlive + inactivityPeriod) return 0;
         return _claimableBy(heir, token);
@@ -696,6 +841,11 @@ contract MidnightVault {
         s.minValidRecoveryId = minValidRecoveryId;
         s.inheritanceUnlocksAt = lastAlive + inactivityPeriod;
         s.inheritanceUnlocked = block.timestamp >= s.inheritanceUnlocksAt;
+        if (_announcementLive()) {
+            s.inheritanceAnnouncedAt = inheritanceAnnouncedAt;
+            s.inheritanceClaimableAt = inheritanceAnnouncedAt + INHERITANCE_NOTICE;
+            s.inheritanceClaimable = block.timestamp >= s.inheritanceClaimableAt;
+        }
         s.hasPendingConfig = _pendingConfig.exists;
     }
 
@@ -828,6 +978,26 @@ contract MidnightVault {
         emit Heartbeat(owner, block.timestamp);
     }
 
+    /// @dev Tell the factory that roles moved, so discovery keeps working.
+    ///      Swallowing a registry failure is deliberate: the registry is a
+    ///      convenience index, and a broken one must never be able to block a
+    ///      recovery or a config change that guardians already agreed to.
+    function _syncRegistry(
+        address previousOwner,
+        address newOwner,
+        address[] memory oldGuardians,
+        address[] memory newGuardians,
+        address[] memory oldHeirs,
+        address[] memory newHeirs
+    ) private {
+        address registry = factory;
+        if (registry.code.length == 0) return;
+
+        try IMidnightRegistry(registry).syncRoles(
+            previousOwner, newOwner, oldGuardians, newGuardians, oldHeirs, newHeirs
+        ) {} catch {}
+    }
+
     function _trackToken(address token) private {
         if (token == address(0)) revert ZeroAddress();
         if (isTrackedToken[token]) return;
@@ -835,14 +1005,23 @@ contract MidnightVault {
         if (_trackedTokens.length >= MAX_TRACKED_TOKENS) revert TooMany();
         isTrackedToken[token] = true;
         _trackedTokens.push(token);
+        _trackedIndex[token] = _trackedTokens.length;
         emit TokenTracked(token);
     }
 
     function _tokenBalance(address token) private view returns (uint256) {
+        (uint256 balance, bool ok) = _tokenBalanceSafe(token);
+        if (!ok) revert NotAContract(token);
+        return balance;
+    }
+
+    /// @dev Reads balanceOf without reverting, so callers can decide whether a
+    ///      misbehaving token is fatal or merely skippable.
+    function _tokenBalanceSafe(address token) private view returns (uint256 balance, bool ok) {
         (bool success, bytes memory data) =
             token.staticcall(abi.encodeWithSignature("balanceOf(address)", address(this)));
-        if (!success || data.length < 32) revert NotAContract(token);
-        return abi.decode(data, (uint256));
+        if (!success || data.length < 32) return (0, false);
+        return (abi.decode(data, (uint256)), true);
     }
 
     function _transferOut(address token, address to, uint256 amount) private {
@@ -852,6 +1031,19 @@ contract MidnightVault {
         } else {
             _safeCallToken(token, abi.encodeWithSignature("transfer(address,uint256)", to, amount), to, amount);
         }
+    }
+
+    /// @dev Same as `_transferOut` but reports failure instead of reverting.
+    function _transferOutSafe(address token, address to, uint256 amount) private returns (bool) {
+        if (token == NATIVE) {
+            (bool sent,) = payable(to).call{value: amount}("");
+            return sent;
+        }
+
+        (bool success, bytes memory returned) =
+            token.call(abi.encodeWithSignature("transfer(address,uint256)", to, amount));
+        if (!success) return false;
+        return returned.length == 0 || abi.decode(returned, (bool));
     }
 
     function _safeTransferFrom(address token, address from, address to, uint256 amount) private {

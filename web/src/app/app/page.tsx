@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { isAddress } from "viem";
 import { useAccount, useReadContract, useReadContracts, useSwitchChain } from "wagmi";
 import { midnightFactoryAbi, midnightVaultAbi } from "@/lib/abi";
+import { ConfigPanel } from "@/components/config-panel";
 import { ConnectControl } from "@/components/connect";
 import { CreateVault } from "@/components/create-vault";
 import { GuardianPanel } from "@/components/guardian-panel";
@@ -11,7 +13,7 @@ import { HeirPanel } from "@/components/heir-panel";
 import { OwnerPanel } from "@/components/owner-panel";
 import { RecoveryCard } from "@/components/recovery";
 import { RequestsCard } from "@/components/requests";
-import { Badge, Button, Card, Mono } from "@/components/ui";
+import { Badge, Button, Card, inputClass, Mono } from "@/components/ui";
 import { CHAIN, FACTORY_ADDRESS, FACTORY_CONFIGURED } from "@/lib/contracts";
 import { shortAddress } from "@/lib/format";
 import { sameAddress, type VaultSummary } from "@/lib/types";
@@ -21,6 +23,8 @@ export default function Dashboard() {
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const [selectedVault, setSelectedVault] = useState<`0x${string}` | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [lookup, setLookup] = useState("");
+  const [manualVaults, setManualVaults] = useState<`0x${string}`[]>([]);
 
   const { data: vaultLists } = useReadContracts({
     contracts: (["vaultsOfOwner", "vaultsOfGuardian", "vaultsOfHeir"] as const).map(
@@ -37,17 +41,20 @@ export default function Dashboard() {
   const vaults = useMemo(() => {
     const seen = new Set<string>();
     const merged: `0x${string}`[] = [];
+    const push = (vault: `0x${string}`) => {
+      if (seen.has(vault.toLowerCase())) return;
+      seen.add(vault.toLowerCase());
+      merged.push(vault);
+    };
     for (const entry of vaultLists ?? []) {
       if (entry.status !== "success") continue;
-      for (const vault of entry.result as readonly `0x${string}`[]) {
-        if (!seen.has(vault.toLowerCase())) {
-          seen.add(vault.toLowerCase());
-          merged.push(vault);
-        }
-      }
+      for (const vault of entry.result as readonly `0x${string}`[]) push(vault);
     }
+    // Vaults opened by hand still belong in the list — the registry index is a
+    // convenience, not the source of truth.
+    for (const vault of manualVaults) push(vault);
     return merged;
-  }, [vaultLists]);
+  }, [vaultLists, manualVaults]);
 
   const activeVault = selectedVault ?? vaults[0] ?? null;
 
@@ -141,6 +148,32 @@ export default function Dashboard() {
             </button>
           </div>
 
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className={`${inputClass} h-9 max-w-xs text-xs`}
+              placeholder="Open a vault by address (0x…)"
+              value={lookup}
+              onChange={(event) => setLookup(event.target.value)}
+            />
+            <Button
+              variant="ghost"
+              className="h-9 px-3 text-xs"
+              disabled={!isAddress(lookup.trim())}
+              onClick={() => {
+                const vault = lookup.trim() as `0x${string}`;
+                setManualVaults((current) =>
+                  current.some((entry) => sameAddress(entry, vault))
+                    ? current
+                    : [...current, vault]
+                );
+                setSelectedVault(vault);
+                setLookup("");
+              }}
+            >
+              Open
+            </Button>
+          </div>
+
           {showCreate || vaults.length === 0 ? (
             <CreateVault onCreated={() => setShowCreate(false)} />
           ) : null}
@@ -168,6 +201,11 @@ export default function Dashboard() {
                 role={{ isOwner: role.isOwner, isGuardian: role.isGuardian }}
               />
               <RecoveryCard
+                vault={activeVault}
+                summary={summary}
+                role={{ isOwner: role.isOwner, isGuardian: role.isGuardian }}
+              />
+              <ConfigPanel
                 vault={activeVault}
                 summary={summary}
                 role={{ isOwner: role.isOwner, isGuardian: role.isGuardian }}

@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { useReadContracts, useWriteContract } from "wagmi";
 import { midnightVaultAbi } from "@/lib/abi";
 import { REQUEST_STATUS, ZERO_ADDRESS } from "@/lib/contracts";
-import { formatAmount, shortAddress } from "@/lib/format";
+import { formatTokenAmount, shortAddress } from "@/lib/format";
+import { metaFor, useTokenMeta } from "@/lib/tokens";
 import type { VaultSummary, WithdrawalRequestData } from "@/lib/types";
 import { useTx } from "@/lib/useTx";
 import { Badge, Button, Card, ErrorText, Mono } from "./ui";
@@ -22,6 +23,7 @@ export function RequestsCard({
 }) {
   const { writeContractAsync } = useWriteContract();
   const { send, pending, error } = useTx();
+  const tokenMeta = useTokenMeta(summary.trackedTokens);
 
   const ids = useMemo(() => {
     const last = Number(summary.requestCount);
@@ -81,10 +83,10 @@ export function RequestsCard({
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-ink-faint">#{id}</span>
                   <span className="font-semibold">
-                    {formatAmount(
-                      request.amount,
-                      request.token === ZERO_ADDRESS ? undefined : "tokens"
-                    )}
+                    {(() => {
+                      const meta = metaFor(tokenMeta, request.token, ZERO_ADDRESS);
+                      return formatTokenAmount(request.amount, meta.decimals, meta.symbol);
+                    })()}
                   </span>
                   <span className="text-sm text-ink-muted">
                     → <Mono>{shortAddress(request.to)}</Mono>

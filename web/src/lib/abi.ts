@@ -158,8 +158,46 @@ export const midnightVaultAbi = [
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "NotStakeholder",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "NothingToClaim",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "claimableAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "NoticeAlreadyStarted",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "claimableAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "NoticeNotElapsed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoticeNotStarted",
     "type": "error"
   },
   {
@@ -280,6 +318,33 @@ export const midnightVaultAbi = [
       }
     ],
     "name": "TimelockNotElapsed",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "balance",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokenNotEmpty",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenNotTracked",
     "type": "error"
   },
   {
@@ -464,6 +529,44 @@ export const midnightVaultAbi = [
         "type": "address"
       },
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "claimableAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "InheritanceAnnounced",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "heir",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "InheritanceClaimSkipped",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "heir",
+        "type": "address"
+      },
+      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -578,6 +681,19 @@ export const midnightVaultAbi = [
       }
     ],
     "name": "TokenTracked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenUntracked",
     "type": "event"
   },
   {
@@ -746,6 +862,19 @@ export const midnightVaultAbi = [
   },
   {
     "inputs": [],
+    "name": "INHERITANCE_NOTICE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "MAX_GUARDIANS",
     "outputs": [
       {
@@ -859,6 +988,13 @@ export const midnightVaultAbi = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "announceInheritance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1293,6 +1429,19 @@ export const midnightVaultAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "inheritanceAnnouncedAt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -1470,6 +1619,30 @@ export const midnightVaultAbi = [
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "heir",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "pendingInheritance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1748,6 +1921,21 @@ export const midnightVaultAbi = [
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "inheritanceAnnouncedAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "inheritanceClaimableAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "inheritanceClaimable",
+            "type": "bool"
+          },
+          {
             "internalType": "bool",
             "name": "hasPendingConfig",
             "type": "bool"
@@ -1807,6 +1995,19 @@ export const midnightVaultAbi = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "untrackToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "vetoConfig",
     "outputs": [],
@@ -1842,6 +2043,42 @@ export const midnightFactoryAbi = [
     "inputs": [],
     "name": "CloneFailed",
     "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "NotAVault",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "RolesSynced",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -1985,6 +2222,44 @@ export const midnightFactoryAbi = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "oldGuardians",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "newGuardians",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "oldHeirs",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "newHeirs",
+        "type": "address[]"
+      }
+    ],
+    "name": "syncRoles",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

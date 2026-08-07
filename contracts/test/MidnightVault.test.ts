@@ -7,7 +7,14 @@ import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signer
 const DAY = 24 * 60 * 60;
 const INACTIVITY = 30 * DAY;
 const TTL = 3 * DAY;
+const NOTICE = 2 * DAY;
 const BPS = 10_000n;
+
+/// Heirs must announce before they can claim; this serves the notice and waits it out.
+async function serveNotice(vault: MidnightVault, heir: HardhatEthersSigner) {
+  await vault.connect(heir).announceInheritance();
+  await time.increase(NOTICE + 1);
+}
 
 describe("Midnight", () => {
   async function deployFixture() {
@@ -78,6 +85,69 @@ describe("Midnight", () => {
       expect(await factory.vaultsOfHeir(h2.address)).to.deep.equal([vaultAddress]);
       expect(await factory.isVault(vaultAddress)).to.equal(true);
       expect(await factory.vaultCount()).to.equal(1n);
+    });
+
+    it("follows the owner when a recovery rotates the key", async () => {
+      const { factory, vault, owner, g1, g2, newOwner } = await loadFixture(deployFixture);
+      const vaultAddress = await vault.getAddress();
+
+      await vault.connect(g1).proposeRecovery(newOwner.address); // auto-approves
+      await vault.connect(g2).approveRecovery(1);
+      await time.increase(2 * DAY + 1);
+      await vault.executeRecovery(1);
+
+      // the whole point: the address that now controls the vault can find it
+      expect(await factory.vaultsOfOwner(newOwner.address)).to.deep.equal([vaultAddress]);
+      expect(await factory.vaultsOfOwner(owner.address)).to.deep.equal([]);
+    });
+
+    it("follows guardians and heirs when a config is applied", async () => {
+      const { factory, vault, owner, g1, g2, g3, h1, h2, outsider } =
+        await loadFixture(deployFixture);
+      const vaultAddress = await vault.getAddress();
+
+      await vault.connect(owner).proposeConfig(
+        [g1.address, g2.address, outsider.address], 2,
+        [h1.address], [10000],
+        45 * DAY, 3 * DAY
+      );
+      await time.increase(2 * DAY + 1);
+      await vault.applyConfig();
+
+      expect(await factory.vaultsOfGuardian(outsider.address)).to.deep.equal([vaultAddress]);
+      expect(await factory.vaultsOfGuardian(g3.address)).to.deep.equal([]);
+      expect(await factory.vaultsOfGuardian(g1.address)).to.deep.equal([vaultAddress]);
+      expect(await factory.vaultsOfHeir(h2.address)).to.deep.equal([]);
+      expect(await factory.vaultsOfHeir(h1.address)).to.deep.equal([vaultAddress]);
+    });
+
+    it("keeps other vaults intact when one of them syncs", async () => {
+      const { factory, vault, params, owner, g1, g2, outsider, newOwner } =
+        await loadFixture(deployFixture);
+      const first = await vault.getAddress();
+
+      // a second vault that shares the same guardian
+      await factory.createVault({ ...params, owner: outsider.address });
+      const second = (await factory.allVaults())[1];
+      expect(await factory.vaultsOfGuardian(g1.address)).to.deep.equal([first, second]);
+
+      await vault.connect(g1).proposeRecovery(newOwner.address);
+      await vault.connect(g2).approveRecovery(1);
+      await time.increase(2 * DAY + 1);
+      await vault.executeRecovery(1);
+
+      expect(await factory.vaultsOfOwner(outsider.address)).to.deep.equal([second]);
+      expect(await factory.vaultsOfOwner(owner.address)).to.deep.equal([]);
+      expect(await factory.vaultsOfOwner(newOwner.address)).to.deep.equal([first]);
+    });
+
+    it("rejects syncRoles from anything that is not one of its vaults", async () => {
+      const { factory, outsider } = await loadFixture(deployFixture);
+      await expect(
+        factory.connect(outsider).syncRoles(
+          outsider.address, outsider.address, [], [], [], []
+        )
+      ).to.be.revertedWithCustomError(factory, "NotAVault");
     });
 
     it("clones are independent: two vaults, separate state", async () => {
@@ -342,9 +412,64 @@ describe("Midnight", () => {
         .to.be.revertedWithCustomError(vault, "StillActive");
     });
 
+    it("requires an announcement before any claim", async () => {
+      const { vault, h1 } = await loadFixture(fundedFixture);
+      await time.increase(INACTIVITY + 1);
+
+      await expect(vault.connect(h1).claimInheritance(ethers.ZeroAddress))
+        .to.be.revertedWithCustomError(vault, "NoticeNotStarted");
+      await expect(vault.connect(h1).claimAllInheritance())
+        .to.be.revertedWithCustomError(vault, "NoticeNotStarted");
+    });
+
+    it("cannot announce while the owner is still active", async () => {
+      const { vault, h1 } = await loadFixture(fundedFixture);
+      await expect(vault.connect(h1).announceInheritance())
+        .to.be.revertedWithCustomError(vault, "StillActive");
+    });
+
+    it("the notice has to elapse before the money moves", async () => {
+      const { vault, h1 } = await loadFixture(fundedFixture);
+      await time.increase(INACTIVITY + 1);
+      await vault.connect(h1).announceInheritance();
+
+      await expect(vault.connect(h1).claimInheritance(ethers.ZeroAddress))
+        .to.be.revertedWithCustomError(vault, "NoticeNotElapsed");
+
+      await time.increase(NOTICE + 1);
+      await expect(vault.connect(h1).claimInheritance(ethers.ZeroAddress))
+        .to.changeEtherBalance(h1, ethers.parseEther("6"));
+    });
+
+    it("a heartbeat during the notice window voids the announcement", async () => {
+      const { vault, owner, h1 } = await loadFixture(fundedFixture);
+      await time.increase(INACTIVITY + 1);
+      await vault.connect(h1).announceInheritance();
+
+      // The owner was unreachable, not gone.
+      await vault.connect(owner).heartbeat();
+      await time.increase(NOTICE + 1);
+
+      await expect(vault.connect(h1).claimInheritance(ethers.ZeroAddress))
+        .to.be.revertedWithCustomError(vault, "StillActive");
+      const summary = await vault.summary();
+      expect(summary.inheritanceAnnouncedAt).to.equal(0n);
+      expect(summary.inheritanceClaimable).to.equal(false);
+    });
+
+    it("an heir cannot restart a live notice to stall the others", async () => {
+      const { vault, h1, h2 } = await loadFixture(fundedFixture);
+      await time.increase(INACTIVITY + 1);
+      await vault.connect(h1).announceInheritance();
+
+      await expect(vault.connect(h2).announceInheritance())
+        .to.be.revertedWithCustomError(vault, "NoticeAlreadyStarted");
+    });
+
     it("splits native funds 60/40 after inactivity", async () => {
       const { vault, h1, h2 } = await loadFixture(fundedFixture);
       await time.increase(INACTIVITY + 1);
+      await serveNotice(vault, h1);
 
       await expect(vault.connect(h1).claimInheritance(ethers.ZeroAddress))
         .to.changeEtherBalance(h1, ethers.parseEther("6"));
@@ -355,6 +480,7 @@ describe("Midnight", () => {
     it("dividend accounting: deposits after the first claim are still split correctly", async () => {
       const { vault, h1, h2, outsider } = await loadFixture(fundedFixture);
       await time.increase(INACTIVITY + 1);
+      await serveNotice(vault, h1);
 
       // h1 claims 60% of 10 = 6
       await vault.connect(h1).claimInheritance(ethers.ZeroAddress);
@@ -374,6 +500,7 @@ describe("Midnight", () => {
     it("double claim without new deposits reverts with NothingToClaim", async () => {
       const { vault, h1 } = await loadFixture(fundedFixture);
       await time.increase(INACTIVITY + 1);
+      await serveNotice(vault, h1);
       await vault.connect(h1).claimInheritance(ethers.ZeroAddress);
       await expect(vault.connect(h1).claimInheritance(ethers.ZeroAddress))
         .to.be.revertedWithCustomError(vault, "NothingToClaim");
@@ -387,29 +514,148 @@ describe("Midnight", () => {
       await vault.connect(owner).depositToken(await token.getAddress(), tokenAmount);
 
       await time.increase(INACTIVITY + 1);
+      await serveNotice(vault, h1);
 
       await expect(vault.connect(h1).claimAllInheritance())
         .to.changeEtherBalance(h1, ethers.parseEther("6"));
       expect(await token.balanceOf(h1.address)).to.equal(ethers.parseEther("600"));
     });
 
-    it("only heirs can claim", async () => {
+    it("only heirs can claim or announce", async () => {
       const { vault, outsider, g1 } = await loadFixture(fundedFixture);
       await time.increase(INACTIVITY + 1);
       await expect(vault.connect(outsider).claimInheritance(ethers.ZeroAddress))
         .to.be.revertedWithCustomError(vault, "NotHeir");
       await expect(vault.connect(g1).claimInheritance(ethers.ZeroAddress))
         .to.be.revertedWithCustomError(vault, "NotHeir");
+      await expect(vault.connect(g1).announceInheritance())
+        .to.be.revertedWithCustomError(vault, "NotHeir");
     });
 
-    it("claimableInheritance view matches actual payouts", async () => {
+    it("claimableInheritance stays zero until the notice is served", async () => {
       const { vault, h1, h2 } = await loadFixture(fundedFixture);
       expect(await vault.claimableInheritance(h1.address, ethers.ZeroAddress)).to.equal(0n);
+
       await time.increase(INACTIVITY + 1);
+      // unlocked, but nobody announced yet
+      expect(await vault.claimableInheritance(h1.address, ethers.ZeroAddress)).to.equal(0n);
+      expect(await vault.pendingInheritance(h1.address, ethers.ZeroAddress))
+        .to.equal(ethers.parseEther("6"));
+
+      await serveNotice(vault, h1);
       expect(await vault.claimableInheritance(h1.address, ethers.ZeroAddress))
         .to.equal(ethers.parseEther("6"));
       expect(await vault.claimableInheritance(h2.address, ethers.ZeroAddress))
         .to.equal(ethers.parseEther("4"));
+    });
+
+    it("summary reports the notice countdown", async () => {
+      const { vault, h1 } = await loadFixture(fundedFixture);
+      await time.increase(INACTIVITY + 1);
+      await vault.connect(h1).announceInheritance();
+
+      const during = await vault.summary();
+      expect(during.inheritanceUnlocked).to.equal(true);
+      expect(during.inheritanceClaimable).to.equal(false);
+      expect(during.inheritanceClaimableAt)
+        .to.equal(during.inheritanceAnnouncedAt + BigInt(NOTICE));
+
+      await time.increase(NOTICE + 1);
+      expect((await vault.summary()).inheritanceClaimable).to.equal(true);
+    });
+  });
+
+  // -------------------------------------------------------------------
+  // Tracked tokens
+  // -------------------------------------------------------------------
+
+  describe("tracked tokens", () => {
+    async function hostile(revertOnBalance: boolean, revertOnTransfer: boolean) {
+      const Hostile = await ethers.getContractFactory("HostileERC20");
+      return Hostile.deploy(revertOnBalance, revertOnTransfer);
+    }
+
+    it("only stakeholders can add to the tracked list", async () => {
+      const { vault, token, outsider, g1 } = await loadFixture(fundedFixture);
+      const tokenAddress = await token.getAddress();
+
+      await expect(vault.connect(outsider).trackToken(tokenAddress))
+        .to.be.revertedWithCustomError(vault, "NotStakeholder");
+      await expect(vault.connect(g1).trackToken(tokenAddress))
+        .to.emit(vault, "TokenTracked");
+    });
+
+    it("untrackToken frees a slot but refuses to hide a funded token", async () => {
+      const { vault, token, owner } = await loadFixture(fundedFixture);
+      const tokenAddress = await token.getAddress();
+      const vaultAddress = await vault.getAddress();
+
+      const Token = await ethers.getContractFactory("MockERC20");
+      const dust = await Token.deploy("Dust", "DUST");
+      const dustAddress = await dust.getAddress();
+
+      await vault.connect(owner).trackToken(dustAddress); // slot 0
+      await token.mint(vaultAddress, ethers.parseEther("5"));
+      await vault.connect(owner).trackToken(tokenAddress); // slot 1
+
+      await expect(vault.connect(owner).untrackToken(tokenAddress))
+        .to.be.revertedWithCustomError(vault, "TokenNotEmpty");
+
+      // dropping slot 0 moves the last entry into its place
+      await expect(vault.connect(owner).untrackToken(dustAddress))
+        .to.emit(vault, "TokenUntracked");
+      expect(await vault.getTrackedTokens()).to.deep.equal([tokenAddress]);
+      expect(await vault.isTrackedToken(dustAddress)).to.equal(false);
+
+      // and the freed slot is reusable
+      await vault.connect(owner).trackToken(dustAddress);
+      expect(await vault.getTrackedTokens()).to.deep.equal([tokenAddress, dustAddress]);
+    });
+
+    it("untrackToken rejects a token that was never tracked", async () => {
+      const { vault, token, owner } = await loadFixture(fundedFixture);
+      await expect(vault.connect(owner).untrackToken(await token.getAddress()))
+        .to.be.revertedWithCustomError(vault, "TokenNotTracked");
+    });
+
+    it("a token that reverts on transfer cannot strand the rest of the estate", async () => {
+      const { vault, token, owner, h1 } = await loadFixture(fundedFixture);
+      const vaultAddress = await vault.getAddress();
+
+      const bad = await hostile(false, true);
+      const badAddress = await bad.getAddress();
+      await bad.mint(vaultAddress, ethers.parseEther("100"));
+      await vault.connect(owner).trackToken(badAddress);
+
+      const amount = ethers.parseEther("1000");
+      await token.mint(owner.address, amount);
+      await token.connect(owner).approve(vaultAddress, amount);
+      await vault.connect(owner).depositToken(await token.getAddress(), amount);
+
+      await time.increase(INACTIVITY + 1);
+      await serveNotice(vault, h1);
+
+      // native + the healthy token still pay out
+      await expect(vault.connect(h1).claimAllInheritance())
+        .to.changeEtherBalance(h1, ethers.parseEther("6"));
+      expect(await token.balanceOf(h1.address)).to.equal(ethers.parseEther("600"));
+
+      // the hostile leg left no accounting behind, so it can be retried later
+      expect(await vault.totalInheritanceClaimed(badAddress)).to.equal(0n);
+      expect(await vault.inheritanceClaimedBy(h1.address, badAddress)).to.equal(0n);
+    });
+
+    it("a token with a broken balanceOf is treated as worthless, not fatal", async () => {
+      const { vault, owner, h1 } = await loadFixture(fundedFixture);
+
+      const bad = await hostile(true, false);
+      await vault.connect(owner).trackToken(await bad.getAddress());
+
+      await time.increase(INACTIVITY + 1);
+      await serveNotice(vault, h1);
+
+      await expect(vault.connect(h1).claimAllInheritance())
+        .to.changeEtherBalance(h1, ethers.parseEther("6"));
     });
   });
 

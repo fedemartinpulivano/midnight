@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { isAddress, parseEther } from "viem";
+import { isAddress, parseEther, parseUnits } from "viem";
 import { useSendTransaction, useWriteContract } from "wagmi";
 import { midnightVaultAbi } from "@/lib/abi";
 import { ZERO_ADDRESS } from "@/lib/contracts";
 import { bpsToPercent, formatAmount, shortAddress } from "@/lib/format";
+import { metaFor, useTokenMeta } from "@/lib/tokens";
 import type { VaultSummary } from "@/lib/types";
 import { useTx } from "@/lib/useTx";
 import { MoonWatch } from "./moon-phase";
+import { TokenDeposit } from "./token-deposit";
 import { Badge, Button, Card, ErrorText, Field, inputClass, Mono } from "./ui";
 
 export function OwnerPanel({
@@ -28,6 +30,9 @@ export function OwnerPanel({
   const [withdrawToken, setWithdrawToken] = useState<string>(ZERO_ADDRESS);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const tokenMeta = useTokenMeta(summary.trackedTokens);
+  const selectedMeta = metaFor(tokenMeta, withdrawToken as `0x${string}`, ZERO_ADDRESS);
+
   async function deposit() {
     let value: bigint;
     try {
@@ -45,7 +50,8 @@ export function OwnerPanel({
   async function requestWithdrawal() {
     let amount: bigint;
     try {
-      amount = parseEther(withdrawAmount);
+      // Parsed with the selected asset's own decimals, not a hardcoded 18.
+      amount = parseUnits(withdrawAmount, selectedMeta.decimals);
       if (amount <= 0n) throw new Error();
     } catch {
       setFormError("Enter a valid withdrawal amount.");
@@ -156,7 +162,7 @@ export function OwnerPanel({
                   <option value={ZERO_ADDRESS}>Native (tBNB)</option>
                   {summary.trackedTokens.map((token) => (
                     <option key={token} value={token}>
-                      {shortAddress(token)}
+                      {metaFor(tokenMeta, token, ZERO_ADDRESS).symbol} · {shortAddress(token)}
                     </option>
                   ))}
                 </select>
@@ -164,7 +170,7 @@ export function OwnerPanel({
             ) : null}
             <input
               className={inputClass}
-              placeholder="Amount"
+              placeholder={`Amount (${selectedMeta.symbol})`}
               value={withdrawAmount}
               onChange={(event) => setWithdrawAmount(event.target.value)}
             />
@@ -179,6 +185,43 @@ export function OwnerPanel({
             </Button>
           </div>
         </Card>
+
+        <TokenDeposit vault={vault} />
+
+        {summary.trackedTokens.length > 0 ? (
+          <Card
+            title="Tracked tokens"
+            subtitle="Included in every inheritance claim. Empty ones can be dropped to free a slot."
+          >
+            <ul className="space-y-2">
+              {summary.trackedTokens.map((token) => (
+                <li key={token} className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-ink-muted">
+                    <Badge tone="muted">{metaFor(tokenMeta, token, ZERO_ADDRESS).symbol}</Badge>{" "}
+                    <Mono>{shortAddress(token)}</Mono>
+                  </span>
+                  <Button
+                    variant="ghost"
+                    className="h-8 px-3 text-xs"
+                    busy={pending === `untrack-${token}`}
+                    onClick={() =>
+                      send(`untrack-${token}`, () =>
+                        writeContractAsync({
+                          address: vault,
+                          abi: midnightVaultAbi,
+                          functionName: "untrackToken",
+                          args: [token],
+                        })
+                      )
+                    }
+                  >
+                    Untrack
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
       </div>
 
       <Card title="Trust network">

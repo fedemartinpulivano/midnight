@@ -8,9 +8,11 @@ import {MidnightVault} from "./MidnightVault.sol";
 ///         roughly 10x cheaper than deploying full contracts per user — and keeps a
 ///         discovery registry so the frontend can find every vault an address is
 ///         related to in a single call.
-/// @dev    The registry reflects roles at creation time. The vault itself is the
-///         source of truth after config changes or owner rotations; the frontend
-///         re-checks roles against each vault before showing actions.
+/// @dev    Vaults call back into `syncRoles` whenever a config change or an owner
+///         rotation moves roles around, so the registry keeps matching the vault
+///         instead of freezing at creation time. Without that callback a recovered
+///         owner would never find their own vault. The vault stays the source of
+///         truth: the frontend re-checks roles against it before showing actions.
 contract MidnightFactory {
     /// @notice The shared implementation every clone delegates to.
     address public immutable implementation;
@@ -21,7 +23,14 @@ contract MidnightFactory {
     mapping(address => address[]) private _vaultsAsHeir;
     mapping(address => bool) public isVault;
 
+    // account => vault => position in the list above, stored as index + 1 so that
+    // zero keeps meaning "not listed". Enables O(1) removal on role changes.
+    mapping(address => mapping(address => uint256)) private _ownerIndex;
+    mapping(address => mapping(address => uint256)) private _guardianIndex;
+    mapping(address => mapping(address => uint256)) private _heirIndex;
+
     error CloneFailed();
+    error NotAVault(address caller);
 
     event VaultCreated(
         address indexed vault,
@@ -31,6 +40,7 @@ contract MidnightFactory {
         uint256 heirCount,
         uint256 inactivityPeriod
     );
+    event RolesSynced(address indexed vault, address indexed previousOwner, address indexed newOwner);
 
     constructor() {
         implementation = address(new MidnightVault());
@@ -41,16 +51,18 @@ contract MidnightFactory {
         returns (address vault)
     {
         vault = _clone(implementation);
+        isVault[vault] = true;
         MidnightVault(payable(vault)).initialize(params);
 
-        isVault[vault] = true;
         _allVaults.push(vault);
-        _vaultsAsOwner[params.owner].push(vault);
+        _add(_vaultsAsOwner[params.owner], _ownerIndex[params.owner], vault);
         for (uint256 i = 0; i < params.guardians.length; i++) {
-            _vaultsAsGuardian[params.guardians[i]].push(vault);
+            address guardian = params.guardians[i];
+            _add(_vaultsAsGuardian[guardian], _guardianIndex[guardian], vault);
         }
         for (uint256 i = 0; i < params.heirs.length; i++) {
-            _vaultsAsHeir[params.heirs[i]].push(vault);
+            address heir = params.heirs[i];
+            _add(_vaultsAsHeir[heir], _heirIndex[heir], vault);
         }
 
         emit VaultCreated(
@@ -61,6 +73,79 @@ contract MidnightFactory {
             params.heirs.length,
             params.inactivityPeriod
         );
+    }
+
+    /// @notice Called by a vault when its roles change, so discovery keeps working
+    ///         for whoever holds those roles now.
+    /// @dev    The vault passes both the old and the new sets and the registry
+    ///         rebuilds the difference: removing an account that is immediately
+    ///         re-added is a no-op in membership terms, which keeps the vault side
+    ///         free of set-difference logic. Only registered vaults may call this,
+    ///         and a vault can only ever move its own entries.
+    function syncRoles(
+        address previousOwner,
+        address newOwner,
+        address[] calldata oldGuardians,
+        address[] calldata newGuardians,
+        address[] calldata oldHeirs,
+        address[] calldata newHeirs
+    ) external {
+        if (!isVault[msg.sender]) revert NotAVault(msg.sender);
+        address vault = msg.sender;
+
+        if (previousOwner != newOwner) {
+            _remove(_vaultsAsOwner[previousOwner], _ownerIndex[previousOwner], vault);
+            _add(_vaultsAsOwner[newOwner], _ownerIndex[newOwner], vault);
+        }
+
+        for (uint256 i = 0; i < oldGuardians.length; i++) {
+            address guardian = oldGuardians[i];
+            _remove(_vaultsAsGuardian[guardian], _guardianIndex[guardian], vault);
+        }
+        for (uint256 i = 0; i < newGuardians.length; i++) {
+            address guardian = newGuardians[i];
+            _add(_vaultsAsGuardian[guardian], _guardianIndex[guardian], vault);
+        }
+
+        for (uint256 i = 0; i < oldHeirs.length; i++) {
+            address heir = oldHeirs[i];
+            _remove(_vaultsAsHeir[heir], _heirIndex[heir], vault);
+        }
+        for (uint256 i = 0; i < newHeirs.length; i++) {
+            address heir = newHeirs[i];
+            _add(_vaultsAsHeir[heir], _heirIndex[heir], vault);
+        }
+
+        emit RolesSynced(vault, previousOwner, newOwner);
+    }
+
+    function _add(
+        address[] storage list,
+        mapping(address => uint256) storage index,
+        address vault
+    ) private {
+        if (index[vault] != 0) return;
+        list.push(vault);
+        index[vault] = list.length;
+    }
+
+    function _remove(
+        address[] storage list,
+        mapping(address => uint256) storage index,
+        address vault
+    ) private {
+        uint256 position = index[vault];
+        if (position == 0) return;
+
+        uint256 slot = position - 1;
+        uint256 last = list.length - 1;
+        if (slot != last) {
+            address moved = list[last];
+            list[slot] = moved;
+            index[moved] = position;
+        }
+        list.pop();
+        index[vault] = 0;
     }
 
     // ---------------------------------------------------------------------
