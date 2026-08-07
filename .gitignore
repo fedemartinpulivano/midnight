@@ -1,0 +1,23 @@
+# Node
+node_modules/
+
+# Env & secrets
+.env
+.env.local
+.env*.local
+
+# Hardhat
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/dist/
+
+# Next.js
+web/.next/
+web/out/
+web/next-env.d.ts
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+Thumbs.db
