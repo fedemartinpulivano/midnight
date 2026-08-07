@@ -9,7 +9,7 @@ import { bpsToPercent, formatAmount, shortAddress } from "@/lib/format";
 import type { VaultSummary } from "@/lib/types";
 import { useTx } from "@/lib/useTx";
 import { MoonWatch } from "./moon-phase";
-import { Badge, Button, Card, ErrorText, Field, inputClass, Mono, Stat } from "./ui";
+import { Badge, Button, Card, ErrorText, Field, inputClass, Mono } from "./ui";
 
 export function OwnerPanel({
   vault,
@@ -74,23 +74,32 @@ export function OwnerPanel({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <Stat
-            label="Vault balance"
-            value={formatAmount(summary.nativeBalance)}
-            sub={`${summary.trackedTokens.length} tracked token(s)`}
-          />
+      {/* Night strip: the one dark surface of the dashboard, home of the vault's vitals. */}
+      <section className="relative overflow-hidden rounded-2xl bg-sky p-6 shadow-lift">
+        <div className="stars-far pointer-events-none absolute inset-0" aria-hidden />
+        <div className="stars pointer-events-none absolute inset-0" aria-hidden />
+        <div className="relative flex flex-wrap items-center justify-between gap-6">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-starlight/80">
+              Vault balance
+            </p>
+            <p className="mt-1 font-display text-5xl font-medium tracking-tight text-paper">
+              {formatAmount(summary.nativeBalance)}
+            </p>
+            <p className="mt-1 text-xs text-starlight/60">
+              {summary.trackedTokens.length} tracked token(s)
+            </p>
+          </div>
           <MoonWatch
             lastAlive={Number(summary.lastAlive)}
             period={Number(summary.inactivityPeriod)}
-            compact
+            bare
           />
         </div>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Button
-            variant="ghost"
-            busy={pending === "heartbeat"}
+        <div className="relative mt-6 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={pending === "heartbeat"}
             onClick={() =>
               send("heartbeat", () =>
                 writeContractAsync({
@@ -100,12 +109,21 @@ export function OwnerPanel({
                 })
               )
             }
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-moonface px-4 text-sm font-semibold text-ink transition-colors hover:bg-gold-soft disabled:opacity-60"
           >
-            ♥ Heartbeat (free proof of life)
-          </Button>
+            {pending === "heartbeat" ? (
+              <span className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              "♥"
+            )}
+            Heartbeat — reset to new moon
+          </button>
+          <span className="text-xs text-starlight/60">
+            Free proof of life. Deposits and requests also reset it.
+          </span>
           {summary.hasPendingConfig ? <Badge tone="warn">Config change pending</Badge> : null}
         </div>
-      </Card>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Deposit" subtitle="Deposits from your wallet also reset the inactivity clock.">

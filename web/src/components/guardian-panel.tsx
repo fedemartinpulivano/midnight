@@ -24,7 +24,7 @@ export function GuardianPanel({
         <MoonWatch
           lastAlive={Number(summary.lastAlive)}
           period={Number(summary.inactivityPeriod)}
-          compact
+          size={48}
         />
       </div>
     </Card>

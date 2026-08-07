@@ -14,8 +14,10 @@ export function MoonPhase({
   size?: number;
 }) {
   const clamped = Math.min(1, Math.max(0, progress));
-  // Shadow disc slides off to the right as the moon fills.
-  const shadowCx = 20 + 34 * clamped;
+  // Keep a visible crescent even right after a heartbeat.
+  const visual = clamped >= 1 ? 1 : Math.max(0.07, clamped);
+  const shadowCx = 20 + 34 * visual;
+  const maskId = `moon-shadow-${Math.round(visual * 1000)}`;
 
   return (
     <svg
@@ -24,23 +26,18 @@ export function MoonPhase({
       viewBox="0 0 40 40"
       role="img"
       aria-label={`Inactivity progress: ${Math.round(clamped * 100)}%`}
+      style={{ filter: "drop-shadow(0 0 10px rgba(242, 229, 191, 0.35))" }}
     >
       <defs>
-        <mask id={`moon-shadow-${Math.round(clamped * 100)}`}>
+        <mask id={maskId}>
           <rect width="40" height="40" fill="#fff" />
-          <circle cx={shadowCx} cy="20" r="17" fill="#000" />
+          <circle cx={shadowCx} cy="20" r="16.6" fill="#000" />
         </mask>
       </defs>
-      {/* dark face of the moon */}
-      <circle cx="20" cy="20" r="16" fill="#1d2547" stroke="#3a4370" strokeWidth="0.75" />
+      {/* dark face of the moon, rimmed so it reads on the night card */}
+      <circle cx="20" cy="20" r="16" fill="#252e59" stroke="#4c568e" strokeWidth="1" />
       {/* lit face, revealed by the sliding shadow */}
-      <circle
-        cx="20"
-        cy="20"
-        r="16"
-        fill="#f2e5bf"
-        mask={`url(#moon-shadow-${Math.round(clamped * 100)})`}
-      />
+      <circle cx="20" cy="20" r="16" fill="#f2e5bf" mask={`url(#${maskId})`} />
       {clamped >= 1 ? (
         <>
           {/* full-moon craters */}
@@ -53,15 +50,19 @@ export function MoonPhase({
   );
 }
 
-/// Night-sky card pairing the moon phase with the live countdown.
+/// Moon phase + live countdown + progress readout. With `bare` it renders
+/// transparent for use inside an existing night surface; otherwise it brings
+/// its own starlit card.
 export function MoonWatch({
   lastAlive,
   period,
-  compact = false,
+  bare = false,
+  size = 64,
 }: {
   lastAlive: number;
   period: number;
-  compact?: boolean;
+  bare?: boolean;
+  size?: number;
 }) {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   useEffect(() => {
@@ -71,24 +72,38 @@ export function MoonWatch({
 
   const progress = period > 0 ? (now - lastAlive) / period : 0;
   const unlocked = progress >= 1;
+  const percent = Math.min(100, Math.max(0, Math.round(progress * 100)));
 
-  return (
-    <div className="stars-far relative overflow-hidden rounded-2xl bg-sky p-4 text-starlight">
-      <div className="stars pointer-events-none absolute inset-0" aria-hidden />
-      <div className={`relative flex items-center gap-4 ${compact ? "" : "sm:gap-5"}`}>
-        <MoonPhase progress={progress} size={compact ? 48 : 64} />
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-starlight/70">
-            Moon watch — {unlocked ? "inheritance unlocked" : "inheritance unlocks in"}
-          </p>
-          <Countdown target={lastAlive + period} variant="dark" />
-          {!unlocked && !compact ? (
-            <p className="mt-1 text-[11px] text-starlight/60">
-              Full moon = heirs can claim. Any owner action resets it to new moon.
-            </p>
-          ) : null}
+  const content = (
+    <div className="relative flex items-center gap-4">
+      <MoonPhase progress={progress} size={size} />
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-starlight/80">
+          Moon watch — {unlocked ? "inheritance unlocked" : "unlocks in"}
+        </p>
+        <Countdown target={lastAlive + period} variant="dark" />
+        <div className="mt-2 flex items-center gap-2">
+          <div className="h-1 w-28 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-moonface/80"
+              style={{ width: `${Math.max(2, percent)}%` }}
+            />
+          </div>
+          <span className="text-[10px] font-medium text-starlight/60">
+            {percent}% of the period
+          </span>
         </div>
       </div>
+    </div>
+  );
+
+  if (bare) return content;
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-sky p-4 text-starlight">
+      <div className="stars-far pointer-events-none absolute inset-0" aria-hidden />
+      <div className="stars pointer-events-none absolute inset-0" aria-hidden />
+      {content}
     </div>
   );
 }
