@@ -144,8 +144,38 @@ body {
   }
 }
 
+/* ---- drifting night clouds ---------------------------------------- */
+
+.cloud-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* A strip twice the viewport plus one tile wide, sliding exactly one tile
+   per loop — with repeat-x and stitched turbulence the drift is seamless. */
+.cloud-strip {
+  position: absolute;
+  left: 0;
+  width: calc(200% + var(--tile));
+  background-repeat: repeat-x;
+  background-size: var(--tile) 100%;
+  animation: cloudDrift var(--dur) linear infinite;
+  will-change: transform;
+}
+
+@keyframes cloudDrift {
+  to {
+    transform: translateX(calc(-1 * var(--tile)));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stars {
+    animation: none;
+  }
+  .cloud-strip {
     animation: none;
   }
 }

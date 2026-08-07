@@ -48,6 +48,51 @@ const failureModes = [
   },
 ];
 
+// Procedural night cirrus: stitched fractal turbulence rendered to alpha,
+// so the repeat-x drift loops without a visible seam.
+const CLOUD_BACK =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='380'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.018' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 -0.32'/%3E%3C/filter%3E%3Crect width='900' height='380' filter='url(%23c)'/%3E%3C/svg%3E\")";
+
+const CLOUD_FRONT =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='240'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01 0.028' numOctaves='4' seed='21' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.85 -0.38'/%3E%3C/filter%3E%3Crect width='700' height='240' filter='url(%23c)'/%3E%3C/svg%3E\")";
+
+function CloudLayer({
+  image,
+  tile,
+  duration,
+  top,
+  height,
+  opacity,
+  blend,
+}: {
+  image: string;
+  tile: number;
+  duration: number;
+  top: string;
+  height: string;
+  opacity: number;
+  blend?: boolean;
+}) {
+  return (
+    <div className="cloud-layer" aria-hidden>
+      <div
+        className="cloud-strip"
+        style={
+          {
+            "--tile": `${tile}px`,
+            "--dur": `${duration}s`,
+            top,
+            height,
+            opacity,
+            backgroundImage: image,
+            mixBlendMode: blend ? "screen" : undefined,
+          } as React.CSSProperties
+        }
+      />
+    </div>
+  );
+}
+
 function FullMoon() {
   return (
     <div
@@ -74,6 +119,14 @@ export default function Landing() {
       <div className="night-sky relative overflow-hidden">
         <div className="stars-far pointer-events-none absolute inset-0" aria-hidden />
         <div className="stars pointer-events-none absolute inset-0" aria-hidden />
+        <CloudLayer
+          image={CLOUD_BACK}
+          tile={900}
+          duration={150}
+          top="8%"
+          height="55%"
+          opacity={0.1}
+        />
         <div className="relative mx-auto max-w-5xl px-6">
           <nav className="rise rise-1 flex items-center justify-between py-8">
             <span className="font-display text-xl font-semibold tracking-tight text-paper">
@@ -130,6 +183,16 @@ export default function Landing() {
             </p>
           </section>
         </div>
+        {/* cirrus drifting across the whole sky — and across the moon, lit by it */}
+        <CloudLayer
+          image={CLOUD_FRONT}
+          tile={700}
+          duration={85}
+          top="4%"
+          height="52%"
+          opacity={0.15}
+          blend
+        />
       </div>
 
       {/* ---- daylight: the product, in paper ---- */}
