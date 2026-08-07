@@ -47,14 +47,18 @@ midnight/
 ├── contracts/            Hardhat + TypeScript
 │   ├── contracts/
 │   │   ├── MidnightVault.sol      ← all vault logic (initializer-based, clonable)
-│   │   ├── MidnightFactory.sol    ← EIP-1167 clones + discovery registry
-│   │   └── mocks/MockERC20.sol
-│   ├── test/MidnightVault.test.ts (35 tests)
-│   └── scripts/deploy.ts · export-abi.mjs
+│   │   ├── MidnightFactory.sol    ← EIP-1167 clones + role discovery registry
+│   │   └── mocks/                 ← MockERC20 + HostileERC20 (reverts on purpose)
+│   ├── test/MidnightVault.test.ts (50 tests)
+│   └── scripts/deploy.ts · demo-local.ts · export-abi.mjs
 └── web/                  Next.js 15 + wagmi v2 + viem + Tailwind v4
     └── src/app           /        landing
                           /app     role-aware dashboard (owner / guardian / heir)
+                          /preview design preview with mocked data
 ```
+
+[CLAUDE.md](CLAUDE.md) documents the mechanism in full — state machines, invariants,
+and the known gaps.
 
 ```
                         MidnightFactory ──creates──▶ EIP-1167 clone
@@ -88,7 +92,7 @@ midnight/
 ```bash
 cd contracts
 npm install
-npm test                 # 35 passing
+npm test                 # 50 passing
 ```
 
 Deploy to BSC Testnet (needs `PRIVATE_KEY` in `contracts/.env`, faucet: https://testnet.bnbchain.org/faucet-smart):

@@ -173,7 +173,7 @@ export default function Landing() {
               </a>
             </div>
             <p className="rise rise-6 mt-10 flex flex-wrap gap-x-6 gap-y-1 text-xs font-medium tracking-wide text-starlight/60">
-              <span>35 passing tests</span>
+              <span>50 passing tests</span>
               <span>·</span>
               <span>zero backend</span>
               <span>·</span>
