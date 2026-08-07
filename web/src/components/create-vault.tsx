@@ -97,7 +97,7 @@ export function CreateVault({ onCreated }: { onCreated?: () => void }) {
             {guardians.map((guardian, index) => (
               <div key={index} className="flex gap-2">
                 <input
-                  className={inputClass}
+                  className={`${inputClass} min-w-0`}
                   placeholder={`Guardian ${index + 1} address (0x…)`}
                   value={guardian}
                   onChange={(event) =>
@@ -161,7 +161,7 @@ export function CreateVault({ onCreated }: { onCreated?: () => void }) {
             {heirs.map((heir, index) => (
               <div key={index} className="flex gap-2">
                 <input
-                  className={inputClass}
+                  className={`${inputClass} min-w-0`}
                   placeholder={`Heir ${index + 1} address (0x…)`}
                   value={heir.address}
                   onChange={(event) =>
@@ -173,7 +173,7 @@ export function CreateVault({ onCreated }: { onCreated?: () => void }) {
                   }
                 />
                 <input
-                  className={`${inputClass} w-24 shrink-0`}
+                  className={`${inputClass} basis-24 grow-0 shrink-0 text-center`}
                   type="number"
                   min={0}
                   max={100}

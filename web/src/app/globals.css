@@ -1,40 +1,90 @@
 @import "tailwindcss";
 
 @theme {
-  --color-night-950: #05070f;
-  --color-night-900: #0b101c;
-  --color-night-800: #121a2b;
-  --color-night-700: #1a2438;
-  --color-line: #1f2a42;
-  --color-ink: #e6eaf5;
-  --color-ink-muted: #8a94ad;
-  --color-ink-faint: #58627a;
-  --color-moon: #8b9dff;
-  --color-moon-deep: #5e72e4;
-  --color-moon-soft: #222c4e;
-  --color-lav: #a78bfa;
-  --color-ok: #4ade80;
-  --color-warn: #fbbf24;
-  --color-danger: #f87171;
+  /* Moonlit paper — light palette with midnight ink */
+  --color-paper: #f7f7fb;
+  --color-card: #fffefc;
+  --color-well: #eff0f7;
+  --color-line: #e2e4f0;
+  --color-line-strong: #c9cde2;
 
-  --font-sans: "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+  --color-ink: #171e3c;
+  --color-ink-muted: #59617e;
+  --color-ink-faint: #979eb6;
+
+  --color-moon: #4a55c9; /* indigo — interactive accent */
+  --color-moon-deep: #333e9e;
+  --color-moon-soft: #eceefc;
+
+  --color-gold: #a8811f; /* lunar gold — highlights */
+  --color-gold-soft: #f8f0da;
+
+  --color-ok: #237c50;
+  --color-ok-soft: #e2f4e9;
+  --color-warn: #9a6c12;
+  --color-warn-soft: #faf1da;
+  --color-danger: #b8402f;
+  --color-danger-soft: #fbe9e5;
+
+  --font-sans: var(--font-albert), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-spline-mono), ui-monospace, "Cascadia Mono", monospace;
+
+  --shadow-card: 0 1px 2px rgba(23, 30, 60, 0.04), 0 8px 24px -12px rgba(23, 30, 60, 0.12);
+  --shadow-lift: 0 2px 4px rgba(23, 30, 60, 0.05), 0 18px 40px -16px rgba(51, 62, 158, 0.22);
 }
 
 html {
-  background: var(--color-night-950);
+  background: var(--color-paper);
   color: var(--color-ink);
 }
 
 body {
   min-height: 100vh;
+  position: relative;
+  /* Fine grain layered over soft gradient washes so large light surfaces
+     don't feel sterile. */
   background:
-    radial-gradient(1100px 500px at 85% -10%, rgba(94, 114, 228, 0.14), transparent 60%),
-    radial-gradient(900px 420px at 0% 110%, rgba(167, 139, 250, 0.08), transparent 55%),
-    var(--color-night-950);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.015'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")
+      repeat,
+    radial-gradient(900px 480px at 88% -6%, rgba(74, 85, 201, 0.07), transparent 62%),
+    radial-gradient(760px 420px at -8% 22%, rgba(168, 129, 31, 0.055), transparent 58%),
+    radial-gradient(680px 400px at 55% 108%, rgba(74, 85, 201, 0.05), transparent 55%),
+    var(--color-paper);
 }
 
 ::selection {
-  background: var(--color-moon-deep);
-  color: white;
+  background: var(--color-moon);
+  color: #fff;
+}
+
+/* ---- entrance choreography ---------------------------------------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  opacity: 0;
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.rise-1 { animation-delay: 0.05s; }
+.rise-2 { animation-delay: 0.14s; }
+.rise-3 { animation-delay: 0.23s; }
+.rise-4 { animation-delay: 0.32s; }
+.rise-5 { animation-delay: 0.41s; }
+.rise-6 { animation-delay: 0.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+    opacity: 1;
+  }
 }

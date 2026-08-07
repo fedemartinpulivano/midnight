@@ -1,6 +1,26 @@
 import type { Metadata } from "next";
+import { Albert_Sans, Fraunces, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+
+const sans = Albert_Sans({
+  subsets: ["latin"],
+  variable: "--font-albert",
+  display: "swap",
+});
+
+const display = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
+const mono = Spline_Sans_Mono({
+  subsets: ["latin"],
+  variable: "--font-spline-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Midnight — the vault that survives you",
@@ -10,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${sans.variable} ${display.variable} ${mono.variable}`}>
       <body className="font-sans antialiased">
         <Providers>{children}</Providers>
       </body>

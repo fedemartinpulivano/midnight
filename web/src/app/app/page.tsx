@@ -74,8 +74,9 @@ export default function Dashboard() {
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-6 pb-20">
       <nav className="flex items-center justify-between py-6">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          <span className="text-moon">●</span> midnight
+        <Link href="/" className="font-display text-xl font-semibold tracking-tight">
+          <span className="mr-1.5 inline-block size-2.5 rounded-full bg-gold align-middle" />
+          midnight
         </Link>
         <ConnectControl />
       </nav>
@@ -126,7 +127,7 @@ export default function Dashboard() {
                 className={`rounded-xl border px-3 py-2 font-mono text-xs transition-colors ${
                   vault === activeVault
                     ? "border-moon bg-moon-soft text-moon"
-                    : "border-line bg-night-900 text-ink-muted hover:border-moon"
+                    : "border-line bg-card text-ink-muted hover:border-moon"
                 }`}
               >
                 {shortAddress(vault)}

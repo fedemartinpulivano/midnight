@@ -12,7 +12,7 @@ export function ConnectControl() {
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-3">
-        <span className="rounded-xl border border-line bg-night-800 px-3 py-2">
+        <span className="rounded-xl border border-line bg-well px-3 py-2">
           <Mono>{shortAddress(address)}</Mono>
         </span>
         <Button variant="ghost" onClick={() => disconnect()}>

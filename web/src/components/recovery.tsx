@@ -109,7 +109,7 @@ export function RecoveryCard({
             const thresholdReached = proposal.approvals >= Number(summary.threshold);
 
             return (
-              <li key={id} className="rounded-xl border border-line bg-night-800/60 p-4">
+              <li key={id} className="rounded-xl border border-line bg-well/60 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-ink-faint">#{id}</span>
