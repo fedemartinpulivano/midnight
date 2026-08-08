@@ -19,7 +19,7 @@ export function Card({
     >
       {title ? (
         <header className="mb-4">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
             {title}
           </h2>
           {subtitle ? <p className="mt-1.5 text-sm leading-relaxed text-ink-faint">{subtitle}</p> : null}

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Albert_Sans, Fraunces, Spline_Sans_Mono } from "next/font/google";
+import { Fraunces, Instrument_Sans, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const sans = Albert_Sans({
+const sans = Instrument_Sans({
   subsets: ["latin"],
-  variable: "--font-albert",
+  variable: "--font-instrument",
   display: "swap",
 });
 

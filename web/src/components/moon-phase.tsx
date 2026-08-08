@@ -14,9 +14,11 @@ export function MoonPhase({
   size?: number;
 }) {
   const clamped = Math.min(1, Math.max(0, progress));
-  // Keep a visible crescent even right after a heartbeat.
-  const visual = clamped >= 1 ? 1 : Math.max(0.07, clamped);
-  const shadowCx = 20 + 34 * visual;
+  // Keep a visible crescent even right after a heartbeat. Quantised to 1/1000
+  // so the milliseconds between server render and hydration can't produce a
+  // different cx attribute string and trip React's hydration check.
+  const visual = clamped >= 1 ? 1 : Math.max(0.07, Math.round(clamped * 1000) / 1000);
+  const shadowCx = Math.round((20 + 34 * visual) * 100) / 100;
   const maskId = `moon-shadow-${Math.round(visual * 1000)}`;
 
   return (

@@ -9,7 +9,9 @@ import { Badge, Mono } from "@/components/ui";
 import type { VaultSummary } from "@/lib/types";
 
 const DAY = 86_400;
-const now = Math.floor(Date.now() / 1000);
+// Rounded to the hour so the server-rendered mock matches the client on
+// hydration instead of drifting by the seconds between the two renders.
+const now = Math.floor(Date.now() / 3_600_000) * 3600;
 
 const mockVault = "0xB7A5bd0345EF1Cc5E66bf61BdeC17D2461fBd968" as `0x${string}`;
 
