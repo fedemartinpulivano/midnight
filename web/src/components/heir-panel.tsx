@@ -8,7 +8,7 @@ import { metaFor, useTokenMeta } from "@/lib/tokens";
 import { sameAddress, type VaultSummary } from "@/lib/types";
 import { useChainNow } from "@/lib/useChainNow";
 import { useTx } from "@/lib/useTx";
-import { MoonWatch } from "./moon-phase";
+import { SilenceWatch } from "./dial";
 import { Badge, Button, Card, ErrorText, Mono, Stat } from "./ui";
 
 export function HeirPanel({
@@ -59,7 +59,7 @@ export function HeirPanel({
       subtitle={`Your share: ${bpsToPercent(shareBps)}. Claims use dividend accounting — late deposits still split correctly.`}
     >
       <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto]">
-        <MoonWatch
+        <SilenceWatch
           lastAlive={Number(summary.lastAlive)}
           period={Number(summary.inactivityPeriod)}
           unlockedOnChain={summary.inheritanceUnlocked}

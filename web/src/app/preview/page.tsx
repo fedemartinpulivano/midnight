@@ -5,7 +5,8 @@
 import { GuardianPanel } from "@/components/guardian-panel";
 import { HeirPanel } from "@/components/heir-panel";
 import { OwnerPanel } from "@/components/owner-panel";
-import { Badge, Mono } from "@/components/ui";
+import { Mono } from "@/components/ui";
+import { Mark } from "@/components/strongroom/mark";
 import type { VaultSummary } from "@/lib/types";
 
 const DAY = 86_400;
@@ -47,32 +48,37 @@ const mockSummary: VaultSummary = {
 
 export default function DesignPreview() {
   return (
-    <main className="mx-auto min-h-screen max-w-5xl space-y-8 px-6 py-10">
-      <div className="flex items-center gap-3">
-        <span className="font-display text-xl font-semibold tracking-tight">
-          <span className="mr-1.5 inline-block size-2.5 rounded-full bg-gold align-middle" />
-          midnight
+    <main className="mx-auto min-h-screen max-w-[1320px] space-y-10 px-6 py-12 sm:px-12">
+      <div className="flex flex-wrap items-center gap-3 border-b border-line pb-6">
+        <Mark size={24} />
+        <span className="vault-expanded text-[12.5px] font-bold uppercase tracking-[0.34em] text-ink">
+          Strongroom
         </span>
-        <Badge tone="warn">design preview — mocked data</Badge>
-        <Mono>{mockVault.slice(0, 10)}…</Mono>
+        <span className="mx-1.5 h-[18px] w-px bg-line-strong" />
+        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+          Vault panel · mocked data
+        </span>
+        <span className="ml-auto">
+          <Mono>{mockVault.slice(0, 10)}…</Mono>
+        </span>
       </div>
 
       <section>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.34em] text-ink-faint">
           Owner panel
         </p>
         <OwnerPanel vault={mockVault} summary={mockSummary} />
       </section>
 
       <section>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.34em] text-ink-faint">
           Guardian panel
         </p>
         <GuardianPanel vault={mockVault} summary={mockSummary} />
       </section>
 
       <section>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-ink-muted">
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.34em] text-ink-faint">
           Heir panel
         </p>
         <HeirPanel vault={mockVault} summary={mockSummary} />

@@ -9,7 +9,7 @@ import { bpsToPercent, formatAmount, shortAddress } from "@/lib/format";
 import { metaFor, useTokenMeta } from "@/lib/tokens";
 import type { VaultSummary } from "@/lib/types";
 import { useTx } from "@/lib/useTx";
-import { MoonWatch } from "./moon-phase";
+import { SilenceWatch } from "./dial";
 import { TokenDeposit } from "./token-deposit";
 import { Badge, Button, Card, ErrorText, Field, inputClass, Mono } from "./ui";
 
@@ -80,23 +80,28 @@ export function OwnerPanel({
 
   return (
     <div className="space-y-4">
-      {/* Night strip: the one dark surface of the dashboard, home of the vault's vitals. */}
-      <section className="relative overflow-hidden rounded-2xl bg-sky p-6 shadow-lift">
-        <div className="stars-far pointer-events-none absolute inset-0" aria-hidden />
-        <div className="stars pointer-events-none absolute inset-0" aria-hidden />
-        <div className="relative flex flex-wrap items-center justify-between gap-6">
+      {/* The vault's vitals: what is in it, and how long the silence has run. */}
+      <section
+        className="relative border border-line p-9"
+        style={{ background: "linear-gradient(180deg,#181a22,#101217)" }}
+      >
+        <div className="relative flex flex-wrap items-center justify-between gap-8">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-starlight/80">
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.26em] text-ink-faint">
               Vault balance
             </p>
-            <p className="mt-1 font-display text-5xl font-medium tracking-tight text-paper">
+            <p
+              className="mt-3 font-display text-6xl font-extrabold tracking-[-0.04em] text-ink"
+              style={{ fontVariationSettings: '"wdth" 88' }}
+            >
               {formatAmount(summary.nativeBalance)}
             </p>
-            <p className="mt-1 text-xs text-starlight/60">
-              {summary.trackedTokens.length} tracked token(s)
+            <p className="mt-2 font-mono text-xs text-ink-faint">
+              {summary.trackedTokens.length} tracked token(s) · vault{" "}
+              {shortAddress(vault)}
             </p>
           </div>
-          <MoonWatch
+          <SilenceWatch
             lastAlive={Number(summary.lastAlive)}
             period={Number(summary.inactivityPeriod)}
             unlockedOnChain={summary.inheritanceUnlocked}
@@ -116,16 +121,14 @@ export function OwnerPanel({
                 })
               )
             }
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-moonface px-4 text-sm font-semibold text-ink transition-colors hover:bg-gold-soft disabled:opacity-60"
+            className="inline-flex h-11 items-center gap-2 border border-moon px-5 text-sm font-semibold text-moon transition-colors hover:bg-moon/12 active:bg-moon/22 disabled:opacity-60"
           >
             {pending === "heartbeat" ? (
               <span className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : (
-              "♥"
-            )}
-            Heartbeat — reset to new moon
+            ) : null}
+            Heartbeat — reset the clock
           </button>
-          <span className="text-xs text-starlight/60">
+          <span className="max-w-[32ch] text-xs text-ink-faint">
             Free proof of life. Deposits and requests also reset it.
           </span>
           {summary.hasPendingConfig ? <Badge tone="warn">Config change pending</Badge> : null}
@@ -227,7 +230,7 @@ export function OwnerPanel({
       <Card title="Trust network">
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-widest text-ink-muted">
+            <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.26em] text-ink-faint">
               Guardians ({summary.threshold.toString()} of {summary.guardians.length} to approve)
             </p>
             <ul className="space-y-1.5">
@@ -239,7 +242,7 @@ export function OwnerPanel({
             </ul>
           </div>
           <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-widest text-ink-muted">
+            <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.26em] text-ink-faint">
               Heirs
             </p>
             <ul className="space-y-1.5">

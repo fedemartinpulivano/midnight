@@ -1,0 +1,138 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   The vault panel, dressed as Strongroom.
+
+   The dashboard is wired to the contracts through wagmi, so none of its markup
+   is rewritten here. Instead this remaps the almanac's *semantic* tokens —
+   paper is the ground, card is a surface, line is a rule, ink is text, moon is
+   the interactive accent — onto the steel ramp. Tailwind v4 compiles utilities
+   down to `var(--color-…)`, so redefining the variables on `.vault` retints
+   every `bg-card`, `border-line` and `text-ink-muted` in the subtree without a
+   single class changing.
+
+   Structure that the palette alone can't carry — flat panels instead of
+   rounded cards, mono labels, engraved figures — lives in components/ui.tsx,
+   which every panel already renders through.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.vault {
+  /* — grounds and rules — */
+  --color-paper: #0a0b0f;
+  --color-card: #14161c;
+  --color-well: #101217;
+  --color-line: rgba(233, 233, 237, 0.09);
+  --color-line-strong: rgba(233, 233, 237, 0.16);
+
+  /* — text — */
+  --color-ink: #f3f5fe;
+  --color-ink-muted: #9aa1b4;
+  --color-ink-faint: #6b7186;
+
+  /* — the accent, and the one spot of colour on the steel — */
+  --color-moon: #9184d9;
+  --color-moon-deep: #b5abfc; /* hover lightens on a dark ground, not darkens */
+  --color-moon-soft: rgba(145, 132, 217, 0.12);
+
+  --color-gold: #9184d9;
+  --color-gold-soft: rgba(145, 132, 217, 0.14);
+
+  /* — state colours, relit for a dark ground — */
+  --color-ok: #7ee0a8;
+  --color-ok-soft: rgba(126, 224, 168, 0.12);
+  --color-warn: #e0b06a;
+  --color-warn-soft: rgba(224, 176, 106, 0.12);
+  --color-danger: #e8836f;
+  --color-danger-soft: rgba(232, 131, 111, 0.12);
+
+  /* The almanac's "night" surfaces — the starlit cards the moon gauge sat on.
+     Strongroom has no night and no moon, so these collapse into the same steel
+     as everything else and the accent takes over what brass used to mark. */
+  --color-sky: #101217;
+  --color-sky-high: #181a22;
+  --color-starlight: #9aa1b4;
+  --color-moonface: #d2cefd;
+  --color-brass: #9184d9;
+
+  /* — type: Archivo for everything spoken, Plex Mono for everything measured — */
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-display: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* Elevation goes away entirely: panels are cut into the steel, not laid on
+     top of it, so a hairline does the work a drop shadow used to. */
+  --shadow-card: 0 0 0 1px rgba(233, 233, 237, 0.04);
+  --shadow-lift: 0 0 0 1px rgba(233, 233, 237, 0.08);
+
+  min-height: 100vh;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* The document ground is vellum for the landing; while the vault is on screen
+   the overscroll gutter has to be steel too, or the page flashes cream. */
+html:has(.vault) {
+  background: #0a0b0f;
+}
+html:has(.vault) body {
+  background: #0a0b0f;
+}
+
+/* The carcass — the same steel band the landing sits inside, so the two
+   screens read as one box. */
+.vault-carcass {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 7px #0c0e13,
+    inset 0 0 0 8px #5c6376,
+    inset 0 0 120px 30px rgba(0, 0, 0, 0.5);
+}
+
+.vault-rivets {
+  position: fixed;
+  inset: 15px;
+  z-index: 81;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.vault-rivets > div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.vault-rivet {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #b6bccd, #3a3f4d 70%, #14161c);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
+}
+
+/* Engraved, not printed — the same treatment the safe door's headline gets. */
+.vault-engraved {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.65),
+    0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.vault-condensed {
+  font-variation-settings: "wdth" 88;
+}
+
+.vault-expanded {
+  font-variation-settings: "wdth" 122;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault *,
+  .vault *::before,
+  .vault *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

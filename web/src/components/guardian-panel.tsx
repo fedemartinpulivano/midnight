@@ -3,7 +3,7 @@
 import { formatAmount } from "@/lib/format";
 import type { VaultSummary } from "@/lib/types";
 import { Card, Stat } from "./ui";
-import { MoonWatch } from "./moon-phase";
+import { SilenceWatch } from "./dial";
 
 /// Guardian actions live in RequestsCard / RecoveryCard; this panel gives the
 /// guardian context about the vault they protect (no private data — everything
@@ -21,7 +21,7 @@ export function GuardianPanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-6">
         <Stat label="Vault balance" value={formatAmount(summary.nativeBalance)} />
-        <MoonWatch
+        <SilenceWatch
           lastAlive={Number(summary.lastAlive)}
           period={Number(summary.inactivityPeriod)}
           unlockedOnChain={summary.inheritanceUnlocked}

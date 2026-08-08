@@ -14,6 +14,7 @@ import { OwnerPanel } from "@/components/owner-panel";
 import { RecoveryCard } from "@/components/recovery";
 import { RequestsCard } from "@/components/requests";
 import { Badge, Button, Card, inputClass, Mono } from "@/components/ui";
+import { Mark } from "@/components/strongroom/mark";
 import { CHAIN, FACTORY_ADDRESS, FACTORY_CONFIGURED } from "@/lib/contracts";
 import { shortAddress } from "@/lib/format";
 import { sameAddress, type VaultSummary } from "@/lib/types";
@@ -79,14 +80,32 @@ export default function Dashboard() {
   const wrongNetwork = isConnected && chainId !== CHAIN.id;
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-6 pb-20">
-      <nav className="flex items-center justify-between py-6">
-        <Link href="/" className="font-display text-xl font-semibold tracking-tight">
-          <span className="mr-1.5 inline-block size-2.5 rounded-full bg-gold align-middle" />
-          midnight
-        </Link>
-        <ConnectControl />
-      </nav>
+    <>
+      <header
+        className="border-b border-line"
+        style={{ background: "linear-gradient(180deg,#14161c,#0e1015)" }}
+      >
+        <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-5 px-6 pb-5 pt-8 sm:px-12">
+          <Link href="/" className="flex items-center gap-3 text-ink">
+            <Mark size={24} />
+            <span className="vault-expanded text-[12.5px] font-bold uppercase tracking-[0.34em]">
+              Strongroom
+            </span>
+            <span className="mx-1.5 h-[18px] w-px bg-line-strong" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+              Vault panel
+            </span>
+          </Link>
+          <div className="flex items-center gap-3.5 font-mono text-[11.5px]">
+            <span className="uppercase tracking-[0.16em] text-ink-faint">
+              {CHAIN.name}
+            </span>
+            <ConnectControl />
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1320px] px-6 pb-28 pt-10 sm:px-12">
 
       {!FACTORY_CONFIGURED ? (
         <Card title="Factory not configured">
@@ -125,16 +144,69 @@ export default function Dashboard() {
           </div>
         </Card>
       ) : (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="space-y-6">
+          {activeVault && summary ? (
+            <div className="flex flex-wrap items-end justify-between gap-7 border-b border-line pb-6">
+              <div>
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.34em] text-ink-faint">
+                  Vault manager
+                </p>
+                <h2 className="vault-condensed m-0 text-[clamp(28px,3.4vw,44px)] font-extrabold tracking-[-0.035em] text-ink">
+                  Vault{" "}
+                  <span className="font-mono text-[0.62em] font-normal text-ink-muted">
+                    {shortAddress(activeVault)}
+                  </span>
+                </h2>
+              </div>
+              <div className="flex flex-wrap gap-8 whitespace-nowrap font-mono">
+                <div>
+                  <div className="mb-2 text-[9.5px] uppercase tracking-[0.24em] text-ink-faint">
+                    Door
+                  </div>
+                  <div className="text-[15px] text-ink">
+                    {summary.inheritanceUnlocked ? "Unlocked" : "Sealed"}
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-2 text-[9.5px] uppercase tracking-[0.24em] text-ink-faint">
+                    Threshold
+                  </div>
+                  <div className="text-[15px] text-ink">
+                    {String(summary.threshold)} of {summary.guardians.length}
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-2 text-[9.5px] uppercase tracking-[0.24em] text-ink-faint">
+                    Heirs
+                  </div>
+                  <div className="text-[15px] text-ink">{summary.heirs.length}</div>
+                </div>
+                <div>
+                  <div className="mb-2 text-[9.5px] uppercase tracking-[0.24em] text-ink-faint">
+                    Your roles
+                  </div>
+                  <div className="flex gap-1.5">
+                    {role.isOwner ? <Badge tone="moon">Owner</Badge> : null}
+                    {role.isGuardian ? <Badge tone="ok">Guardian</Badge> : null}
+                    {role.isHeir ? <Badge tone="warn">Heir</Badge> : null}
+                    {!role.isOwner && !role.isGuardian && !role.isHeir ? (
+                      <Badge>Observer</Badge>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-2.5">
             {vaults.map((vault) => (
               <button
                 key={vault}
                 onClick={() => setSelectedVault(vault)}
-                className={`rounded-xl border px-3 py-2 font-mono text-xs transition-colors ${
+                className={`border px-3.5 py-2 font-mono text-xs transition-colors ${
                   vault === activeVault
                     ? "border-moon bg-moon-soft text-moon"
-                    : "border-line bg-card text-ink-muted hover:border-moon"
+                    : "border-line text-ink-muted hover:border-moon hover:text-moon"
                 }`}
               >
                 {shortAddress(vault)}
@@ -142,7 +214,7 @@ export default function Dashboard() {
             ))}
             <button
               onClick={() => setShowCreate((value) => !value)}
-              className="rounded-xl border border-dashed border-line px-3 py-2 text-xs text-ink-muted transition-colors hover:border-moon hover:text-moon"
+              className="border border-dashed border-line px-3.5 py-2 text-xs text-ink-muted transition-colors hover:border-moon hover:text-moon"
             >
               + New vault
             </button>
@@ -180,15 +252,8 @@ export default function Dashboard() {
 
           {activeVault && summary ? (
             <>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-ink-muted">
-                  Vault <Mono>{shortAddress(activeVault)}</Mono>
-                </span>
-                {role.isOwner ? <Badge tone="moon">Owner</Badge> : null}
-                {role.isGuardian ? <Badge tone="ok">Guardian</Badge> : null}
-                {role.isHeir ? <Badge tone="warn">Heir</Badge> : null}
-              </div>
-
+              {/* Identity now lives in the title plate above, so the panels
+                  start straight away. */}
               {role.isOwner ? <OwnerPanel vault={activeVault} summary={summary} /> : null}
               {role.isGuardian ? (
                 <GuardianPanel vault={activeVault} summary={summary} />
@@ -214,6 +279,7 @@ export default function Dashboard() {
           ) : null}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
