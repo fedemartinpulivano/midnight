@@ -1,0 +1,34 @@
+/* The shell every content section below the safe shares: a hairline seam,
+   the 1280px measure, and the mono kicker that labels it. */
+
+.section {
+  border-top: 1px solid var(--hairline);
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 100px 46px;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+  margin: 0 0 22px;
+}
+
+.lede {
+  font-size: 17px;
+  color: var(--color-neutral-400);
+  max-width: 62ch;
+  margin: 0 0 44px;
+}
+
+@media (max-width: 860px) {
+  .inner {
+    padding: 64px 28px;
+  }
+}

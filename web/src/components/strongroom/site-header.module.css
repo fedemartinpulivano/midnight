@@ -1,0 +1,58 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: rgba(10, 11, 15, 0.78);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 26px 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandName {
+  font-size: 13px;
+  font-weight: 700;
+  font-variation-settings: "wdth" 122;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--color-neutral-100);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 13px;
+  color: var(--color-neutral-400);
+}
+
+.navCta {
+  padding: 9px 18px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+@media (max-width: 860px) {
+  .inner {
+    padding: 20px 28px;
+  }
+  .nav {
+    gap: 18px;
+  }
+  .nav a {
+    display: none;
+  }
+}

@@ -1,0 +1,53 @@
+/* The route transition: two steel leaves swing shut over the viewport, the
+   wheel takes half a turn, and they open again onto the next screen. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 98;
+  pointer-events: none;
+}
+
+.leaf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.2%;
+  transition: transform 0.5s cubic-bezier(0.72, 0, 0.16, 1);
+}
+
+.leafLeft {
+  left: 0;
+  background: linear-gradient(96deg, #20242e, var(--steel-850));
+  border-right: 1px solid var(--steel-350);
+  transform: translateX(-101%);
+}
+
+.leafRight {
+  right: 0;
+  background: linear-gradient(264deg, #20242e, var(--steel-850));
+  border-left: 1px solid var(--steel-350);
+  transform: translateX(101%);
+}
+
+.shut .leafLeft,
+.shut .leafRight {
+  transform: translateX(0%);
+}
+
+.wheelWrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wheel {
+  transform: rotate(-540deg);
+  transition: transform 0.9s cubic-bezier(0.6, 0.02, 0.2, 1);
+}
+
+.shut .wheel {
+  transform: rotate(0deg);
+}

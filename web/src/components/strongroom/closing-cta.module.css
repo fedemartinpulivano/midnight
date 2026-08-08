@@ -1,0 +1,68 @@
+.section {
+  border-top: 1px solid var(--hairline);
+  background: linear-gradient(180deg, #15171e, var(--steel-ground));
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 130px 46px 140px;
+}
+
+.heading {
+  font-size: clamp(46px, 6.6vw, 78px);
+  font-weight: 800;
+  font-variation-settings: "wdth" 88;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin: 0 0 30px;
+  max-width: 17ch;
+  color: var(--color-neutral-100);
+}
+
+.body {
+  font-size: 19px;
+  color: var(--color-neutral-400);
+  max-width: 54ch;
+  margin: 0 0 38px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cta {
+  padding: 15px 26px;
+  font-size: 14px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+.footer {
+  border-top: 1px solid var(--hairline);
+}
+
+.footerInner {
+  max-width: 1280px;
+  margin: 0 auto;
+  /* the deep bottom padding keeps the Site/Vault switch off the type */
+  padding: 26px 46px 76px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #565b6e;
+}
+
+@media (max-width: 860px) {
+  .inner {
+    padding: 84px 28px 96px;
+  }
+  .footerInner {
+    padding: 26px 28px 76px;
+  }
+}

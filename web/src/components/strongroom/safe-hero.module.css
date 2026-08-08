@@ -1,0 +1,515 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   The safe. Four viewport heights of scroll, pinned: the wheel turns, the
+   eight bolts pull out of their housings, the door lifts off its seat and
+   swings on the hinge, and the camera pushes through the opening until the
+   chamber is all that is left.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.section {
+  height: 400vh;
+  position: relative;
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--steel-void);
+}
+
+/* — the chamber behind the door — */
+
+.chamber {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    70% 60% at 50% 45%,
+    #1d212b 0%,
+    var(--steel-950) 58%,
+    var(--steel-void) 100%
+  );
+}
+
+.chamberGrain {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.016) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+.reveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8vw;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.revealInner {
+  text-align: center;
+  max-width: 60ch;
+}
+
+.revealKicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+  margin: 0 0 clamp(14px, 2.6vh, 28px);
+}
+
+.revealTitle {
+  font-size: clamp(38px, 6.4vh, 80px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  font-variation-settings: "wdth" 92;
+  margin: 0 0 clamp(14px, 2.6vh, 26px);
+  color: var(--color-neutral-100);
+}
+
+.revealBody {
+  font-size: clamp(14.5px, 1.8vh, 19px);
+  line-height: 1.55;
+  color: var(--color-neutral-400);
+  margin: 0 auto clamp(18px, 3.2vh, 34px);
+  max-width: 54ch;
+}
+
+.revealActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: clamp(18px, 3.2vh, 38px);
+}
+
+.cta {
+  padding: 14px 26px;
+  font-size: 14px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+.revealStats {
+  display: flex;
+  justify-content: center;
+  gap: clamp(22px, 4vw, 52px);
+  border-top: 1px solid rgba(233, 233, 237, 0.09);
+  padding-top: clamp(12px, 2vh, 20px);
+  font-family: var(--font-mono);
+}
+
+.revealStatValue {
+  font-size: clamp(15px, 2.1vh, 21px);
+  color: var(--color-neutral-100);
+}
+
+.revealStatLabel {
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #5c6174;
+  margin-top: 6px;
+}
+
+/* — the steel face, with the door recessed into it — */
+
+.cam {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  transform: scale(1);
+  opacity: 1;
+}
+
+.plate {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    104deg,
+    #2c313d 0%,
+    #1c2029 34%,
+    #242832 62%,
+    #12141a 100%
+  );
+  /* The hole the camera eventually flies through. */
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    transparent 19.6vmin,
+    #000 19.9vmin
+  );
+  mask-image: radial-gradient(
+    circle at 50% 50%,
+    transparent 19.6vmin,
+    #000 19.9vmin
+  );
+}
+
+.plateGrain {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    92deg,
+    rgba(255, 255, 255, 0.022) 0 1px,
+    transparent 1px 6px
+  );
+}
+
+.plateSheen {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    70% 55% at 22% 10%,
+    rgba(233, 233, 237, 0.07),
+    transparent 62%
+  );
+}
+
+.plateInner {
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(233, 233, 237, 0.09);
+}
+
+/* Everything engraved on the face is laid out around the door, never over it:
+   the centre column is exactly as wide as the door and stays empty. */
+.faceGrid {
+  position: absolute;
+  inset: 0;
+  padding: clamp(30px, 4.6vh, 58px) clamp(30px, 3.6vw, 64px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(240px, 46vmin, 620px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  gap: 0 clamp(18px, 2.4vw, 40px);
+  align-items: center;
+}
+
+.brand {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brandName {
+  font-size: clamp(15px, 1.9vh, 20px);
+  font-weight: 700;
+  font-variation-settings: "wdth" 122;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--color-neutral-100);
+}
+
+.modelPlate {
+  grid-column: 3;
+  grid-row: 1;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #666d82;
+  line-height: 2;
+}
+
+.pitch {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+}
+
+.pitchKicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: #6f7689;
+  margin: 0 0 clamp(12px, 2.2vh, 24px);
+}
+
+.pitchTitle {
+  font-size: clamp(34px, 5.8vh, 72px);
+  line-height: 0.97;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  font-variation-settings: "wdth" 88;
+  margin: 0 0 clamp(12px, 2.2vh, 24px);
+  color: #d6dae7;
+  /* engraved, not printed: a dark bottom edge with a hairline highlight above */
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.65),
+    0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.pitchBody {
+  font-size: clamp(14px, 1.7vh, 18px);
+  line-height: 1.55;
+  color: var(--steel-200);
+  max-width: 44ch;
+  margin: 0;
+}
+
+.schedule {
+  grid-column: 3;
+  grid-row: 2;
+  align-self: center;
+  text-align: right;
+}
+
+.scheduleKicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #6f7689;
+  margin: 0 0 clamp(12px, 2.2vh, 22px);
+}
+
+.scheduleList {
+  display: grid;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1.4vh, 13.5px);
+  color: var(--steel-200);
+}
+
+.scheduleRow {
+  border-bottom: 1px solid var(--hairline-strong);
+  padding-bottom: 11px;
+}
+
+.scheduleRow:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.scheduleNum {
+  color: #d6dae7;
+}
+
+.faceStats {
+  grid-column: 1;
+  grid-row: 3;
+  display: flex;
+  gap: clamp(20px, 3vw, 44px);
+  font-family: var(--font-mono);
+  align-items: flex-end;
+}
+
+.faceStatValue {
+  font-size: clamp(15px, 2vh, 20px);
+  color: #c3c9d8;
+}
+
+.faceStatLabel {
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #666d82;
+  margin-top: 5px;
+}
+
+.status {
+  grid-column: 3;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  /* clears the Site/Vault switch parked in the same corner */
+  padding-bottom: 52px;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #666d82;
+}
+
+.lamp {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3a3e52;
+  box-shadow: 0 0 10px #3a3e52;
+}
+
+/* — the opening itself — */
+
+.spill {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 62vmin;
+  height: 62vmin;
+  margin: -31vmin 0 0 -31vmin;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(145, 132, 217, 0.18),
+    rgba(145, 132, 217, 0.05) 45%,
+    transparent 66%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 39.9vmin;
+  height: 39.9vmin;
+  margin: -19.95vmin 0 0 -19.95vmin;
+  border-radius: 50%;
+  border: 1px solid rgba(233, 233, 237, 0.16);
+  box-shadow:
+    inset 0 0 34px rgba(0, 0, 0, 0.9),
+    0 0 0 6px rgba(9, 10, 14, 0.9);
+  pointer-events: none;
+}
+
+.hinges {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -16vmin 0 0 -21.4vmin;
+  height: 32vmin;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.knuckle {
+  width: 3.4vmin;
+  height: 6vmin;
+  background: linear-gradient(
+    96deg,
+    var(--steel-200) 0 18%,
+    var(--steel-400) 42%,
+    #22262f 78%,
+    var(--steel-800)
+  );
+  border-radius: 1.7vmin 0 0 1.7vmin;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* The shadow lives on the outer, non-rotating box on purpose: a filter on the
+   rotating element flattens its 3D context, which discards the back plate's
+   translateZ and paints it over the door. */
+.doorShadow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46vmin;
+  height: 46vmin;
+  margin: -23vmin 0 0 -23vmin;
+  perspective: 1600px;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+.door {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: 14% 50%;
+  transform: rotateY(0deg) translateZ(0px);
+  opacity: 1;
+  will-change: transform;
+}
+
+/* the block's own thickness, seen as the door swings off its seat */
+.doorBack {
+  position: absolute;
+  left: 7.4%;
+  top: 7.4%;
+  width: 85.2%;
+  height: 85.2%;
+  border-radius: 50%;
+  transform: translateZ(-26px);
+  background: linear-gradient(96deg, #2b303b, var(--steel-800));
+  box-shadow: 0 0 0 1px var(--steel-500);
+}
+
+.doorFace {
+  position: relative;
+  z-index: 1;
+}
+
+/* On a phone the face has no room for three columns of engraving either side
+   of the door, so it stacks: mark above, headline below, and the secondary
+   plates drop out — the story section says all of it again anyway. */
+@media (max-width: 760px) {
+  .faceGrid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto auto;
+    padding: 26px 22px 30px;
+    text-align: center;
+  }
+
+  .modelPlate,
+  .schedule,
+  .faceStats {
+    display: none;
+  }
+
+  .brand {
+    grid-column: 1;
+    justify-content: center;
+  }
+
+  .pitch {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+
+  .pitchTitle {
+    font-size: clamp(28px, 8vw, 42px);
+  }
+
+  .pitchBody {
+    max-width: none;
+  }
+
+  .status {
+    grid-column: 1;
+    grid-row: 4;
+    justify-content: center;
+    padding-bottom: 46px;
+  }
+
+  .revealStats {
+    flex-wrap: wrap;
+    gap: 18px 26px;
+  }
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  z-index: 6;
+  opacity: 1;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #7c8398;
+  animation: sr-hint 2.4s ease-in-out infinite;
+  pointer-events: none;
+}

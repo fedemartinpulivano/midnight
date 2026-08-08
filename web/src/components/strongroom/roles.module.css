@@ -1,0 +1,47 @@
+.heading {
+  font-size: clamp(38px, 5vw, 58px);
+  font-weight: 800;
+  font-variation-settings: "wdth" 88;
+  letter-spacing: -0.035em;
+  margin: 0 0 14px;
+  color: var(--color-neutral-100);
+}
+
+/* 1px of grid gap over a tinted ground is the divider — no borders per cell */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--hairline-strong);
+  border: 1px solid var(--hairline-strong);
+}
+
+.role {
+  background: var(--steel-800);
+  padding: 34px;
+}
+
+.roleName {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+  margin: 0 0 20px;
+}
+
+.powers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  font-size: 14.5px;
+  color: var(--color-neutral-400);
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

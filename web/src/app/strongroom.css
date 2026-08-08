@@ -1,0 +1,197 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Strongroom — the landing's design layer.
+
+   Everything here is scoped under `.strongroom` on purpose. The app's own
+   globals.css owns the document: Tailwind's preflight, the almanac palette and
+   the `@theme` block that /app is built on. This file must not reach any of it,
+   so it declares its tokens on the wrapper rather than :root and prefixes every
+   element and component rule. Only the keyframes and the reduced-motion guard
+   are global — neither can collide.
+
+   Tokens below are the Nocturne design system's, ported from the handoff
+   verbatim; the steel ramp and hairlines are Strongroom's own layer on top.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.strongroom {
+  /* — Nocturne — */
+  --color-bg: #161826;
+  --color-surface: #232532;
+  --color-text: #e9e9ed;
+  --color-accent: #9184d9;
+  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-200: #e4e7f5;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #75798c;
+  --color-neutral-700: #595d6c;
+  --color-neutral-800: #3f424d;
+  --color-neutral-900: #292b31;
+
+  --color-accent-100: #f5f4ff;
+  --color-accent-200: #e7e5fe;
+  --color-accent-300: #d2cefd;
+  --color-accent-400: #b5abfc;
+  --color-accent-500: #968ae0;
+  --color-accent-600: #796cbf;
+  --color-accent-700: #5d5294;
+  --color-accent-800: #423a6a;
+  --color-accent-900: #2b2741;
+
+  --radius-md: 8px;
+  --space-1: 2.8px;
+  --space-2: 5.6px;
+  --space-3: 8.4px;
+
+  /* — Strongroom: type, and the vault's own steel ramp — */
+  --font-heading: var(--font-archivo), system-ui, sans-serif;
+  --font-body: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --steel-void: #06070a;
+  --steel-ground: #0a0b0f;
+  --steel-950: #0c0e13;
+  --steel-900: #101217;
+  --steel-850: #12141a;
+  --steel-800: #14161c;
+  --steel-750: #171a21;
+  --steel-700: #181a22;
+  --steel-650: #1c2029;
+  --steel-600: #232732;
+  --steel-550: #2c313d;
+  --steel-500: #3d4353;
+  --steel-400: #5a6072;
+  --steel-350: #6a7186;
+  --steel-300: #767d92;
+  --steel-250: #868da2;
+  --steel-200: #9aa1b4;
+  --steel-150: #b6bccd;
+  --steel-100: #c9cede;
+  --steel-050: #dfe3ee;
+
+  --ink-dim: #565c70;
+  --ink-label: #6b7186;
+  --ink-quiet: #5c6274;
+
+  --hairline: rgba(233, 233, 237, 0.07);
+  --hairline-list: rgba(233, 233, 237, 0.08);
+  --hairline-panel: rgba(233, 233, 237, 0.09);
+  --hairline-strong: rgba(233, 233, 237, 0.1);
+
+  /* The landing paints its own ground: the page behind it is vellum. */
+  min-height: 100vh;
+  background: var(--steel-ground);
+  color: var(--color-neutral-200);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.strongroom :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-heading);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--space-2);
+}
+
+.strongroom p {
+  margin: 0 0 var(--space-3);
+}
+
+.strongroom a {
+  color: var(--color-neutral-300);
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+.strongroom a:hover {
+  color: var(--color-neutral-100);
+}
+
+.strongroom :focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.strongroom ::selection {
+  background: rgba(145, 132, 217, 0.3);
+}
+
+/* — buttons — the primary is an accent outline, never a fill — */
+
+.strongroom .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+}
+
+.strongroom .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.strongroom .btn-primary {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.strongroom .btn-primary:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+.strongroom .btn-primary:active {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.strongroom .btn-secondary {
+  border-color: var(--color-divider);
+}
+.strongroom .btn-secondary:hover {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+.strongroom .btn-secondary:active {
+  background: color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+
+.strongroom .btn-ghost {
+  color: var(--color-accent);
+  padding-inline: var(--space-1);
+}
+.strongroom .btn-ghost:hover {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+/* — global, and uncollidable — */
+
+@keyframes sr-hint {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-50%, 6px);
+    opacity: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strongroom *,
+  .strongroom *::before,
+  .strongroom *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

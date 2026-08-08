@@ -1,0 +1,28 @@
+.switch {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 96;
+  display: flex;
+  border: 1px solid var(--color-neutral-800);
+  background: rgba(10, 11, 15, 0.92);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.opt {
+  border: 0;
+  cursor: pointer;
+  padding: 9px 18px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: transparent;
+  color: #767b95;
+}
+
+.opt[aria-current="page"] {
+  background: var(--color-accent);
+  color: #14121f;
+}
